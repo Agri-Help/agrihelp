@@ -14,16 +14,21 @@ Ti servono tre account a tuo nome: **Supabase** (il database), **Anthropic** (l'
 3. **Authentication → Sign In / Providers**:
    - **disattiva** "Allow new users to sign up" (così entra solo chi inviti tu);
    - lascia attivo **Email**.
-4. **Authentication → Emails → Templates**:
-   - **Magic Link**: oggetto `Il tuo codice AgriHelp`, corpo = contenuto del file `supabase/email/accesso.html`;
-   - **Invite user**: oggetto `Sei invitato in AgriHelp`, corpo = contenuto del file `supabase/email/invito.html`.
+4. **Invio delle email (obbligatorio)**: senza questo passaggio Supabase manda le email solo a te, e i clienti non ricevono né l'invito né il codice. Usiamo **Brevo**, che è gratis fino a 300 email al giorno.
+   - Crea l'account su <https://www.brevo.com>.
+   - **Senders & IP → Senders → Add a sender**: nome `AgriHelp`, email del tuo dominio (es. `assistenza@gennariapp.com`; meglio non una @gmail.com, finirebbe nello spam). Conferma l'email che ti arriva. Se Brevo te lo propone, autentica anche il dominio (Domains): migliora la consegna.
+   - **SMTP & API → SMTP → Generate a new SMTP key**: copia la chiave e annota il **Login** che vedi nella stessa pagina.
+   - In Supabase: **Authentication → Emails → Set up SMTP** e compila:
+     Sender email = l'email del punto sopra · Sender name = `AgriHelp` · Host = `smtp-relay.brevo.com` · Port = `587` · Username = il Login di Brevo · Password = la chiave SMTP. Salva.
+   - **Authentication → Rate Limits**: porta "emails per hour" a 100.
+   - Ora in **Authentication → Emails** puoi modificare i modelli:
+     - **Magic Link**: oggetto `Il tuo codice AgriHelp`, corpo = contenuto del file `supabase/email/accesso.html`;
+     - **Invite user**: oggetto `Sei invitato in AgriHelp`, corpo = contenuto del file `supabase/email/invito.html`.
 5. **Authentication → Users → Add user → Create new user**: metti **la tua email**, spunta "Auto confirm". Sarai l'amministratore.
 6. **Project Settings → API**: tieni aperta questa pagina, ti servono 3 valori:
    - Project URL
    - `anon` `public` key
    - `service_role` key (è segreta: non mandarla a nessuno)
-
-> Le email gratuite di Supabase sono poche all'ora. Quando avrai molti clienti, in **Authentication → Emails → SMTP** si collega un servizio di invio (es. Brevo o Resend, gratuiti fino a qualche centinaio di email al giorno).
 
 ## 2. Anthropic: l'assistente
 

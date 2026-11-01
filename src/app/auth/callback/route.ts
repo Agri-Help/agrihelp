@@ -10,6 +10,9 @@ export async function GET(req: Request) {
   const tokenHash = url.searchParams.get("token_hash");
   const tipo = url.searchParams.get("type") as EmailOtpType | null;
 
+  // Nessun parametro: le chiavi possono essere dopo il "#", le legge la pagina di accesso
+  if (!code && !tokenHash) return NextResponse.redirect(new URL("/accedi", url.origin));
+
   let ok = false;
   if (code) ok = !(await sb.auth.exchangeCodeForSession(code)).error;
   else if (tokenHash && tipo) ok = !(await sb.auth.verifyOtp({ token_hash: tokenHash, type: tipo })).error;

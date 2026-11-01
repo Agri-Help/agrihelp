@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
 export default function ModuloAccesso() {
@@ -8,6 +8,23 @@ export default function ModuloAccesso() {
   const [fase, setFase] = useState<"email" | "codice">("email");
   const [attesa, setAttesa] = useState(false);
   const [errore, setErrore] = useState("");
+
+  // Link dell'email con le chiavi dopo il "#" (modelli email standard di Supabase)
+  useEffect(() => {
+    const h = new URLSearchParams(location.hash.slice(1));
+    const access = h.get("access_token");
+    const refresh = h.get("refresh_token");
+    if (access && refresh) {
+      supabaseBrowser()
+        .auth.setSession({ access_token: access, refresh_token: refresh })
+        .then(({ error }) => {
+          if (error) setErrore("Il link è scaduto o non è valido. Richiedi un nuovo codice.");
+          else location.href = "/";
+        });
+    } else if (h.get("error_description")) {
+      setErrore("Il link è scaduto o non è valido. Richiedi un nuovo codice.");
+    }
+  }, []);
 
   async function inviaCodice(e: React.FormEvent) {
     e.preventDefault();
