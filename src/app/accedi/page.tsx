@@ -1,5 +1,8 @@
 import { Scena, Logo } from "@/components/Scena";
 import ModuloAccesso from "./ModuloAccesso";
+import { supabaseUrl, supabaseAnonKey } from "@/lib/supabase/config";
+
+export const dynamic = "force-dynamic";
 
 export default async function Accedi({ searchParams }: { searchParams: Promise<{ errore?: string }> }) {
   const { errore } = await searchParams;
@@ -22,7 +25,7 @@ export default async function Accedi({ searchParams }: { searchParams: Promise<{
         {errore === "link" && (
           <p className="rounded-xl bg-red-500/15 p-3 text-sm text-red-200">Il link è scaduto o non è valido. Richiedi un nuovo codice.</p>
         )}
-        <ModuloAccesso />
+        <ModuloAccesso url={supabaseUrl()} chiave={supabaseAnonKey()} />
       </div>
     </main>
   );

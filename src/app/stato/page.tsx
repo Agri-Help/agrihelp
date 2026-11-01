@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { supabaseUrl, supabaseServiceKey } from "@/lib/supabase/config";
+import { supabaseUrl, supabaseServiceKey, supabaseAnonKey, diagnosiChiavi } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +33,10 @@ export default async function Stato() {
       database = `errore: ${e instanceof Error ? e.message : "sconosciuto"}`;
     }
   }
-  const tuttoOk = righe.every((r) => r.presente || !r.obbligatoria) && database === "ok";
+  const chiavi = diagnosiChiavi();
+  const pubblicaOk = !!supabaseAnonKey();
+  const segretaOk = !!service;
+  const tuttoOk = pubblicaOk && segretaOk && righe.every((r) => r.presente || !r.obbligatoria) && database === "ok";
 
   return (
     <main className="mx-auto max-w-xl p-5">
@@ -57,6 +60,17 @@ export default async function Stato() {
             )}
           </li>
         )}
+        <li className="mt-2 border-t border-white/10 pt-2 text-sm">
+          <p>{pubblicaOk ? "✅" : "❌"} Chiave pubblica (sb_publishable_…) trovata</p>
+          <p>{segretaOk ? "✅" : "❌"} Chiave segreta (sb_secret_…) trovata</p>
+          <ul className="mt-1 font-mono text-xs text-white/60">
+            {chiavi.map((c) => (
+              <li key={c.nome}>
+                {c.nome}: {c.tipo}
+              </li>
+            ))}
+          </ul>
+        </li>
         <li className="mt-2 border-t border-white/10 pt-2 text-sm">
           {database === "ok" ? "✅" : "❌"} Collegamento al database: {database}
         </li>

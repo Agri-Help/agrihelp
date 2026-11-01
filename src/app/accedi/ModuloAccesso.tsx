@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-export default function ModuloAccesso() {
+export default function ModuloAccesso({ url, chiave }: { url: string; chiave: string }) {
+  const sb = () => supabaseBrowser(url, chiave);
   const [email, setEmail] = useState("");
   const [codice, setCodice] = useState("");
   const [fase, setFase] = useState<"email" | "codice" | "password">("email");
@@ -16,7 +17,7 @@ export default function ModuloAccesso() {
     const access = h.get("access_token");
     const refresh = h.get("refresh_token");
     if (access && refresh) {
-      supabaseBrowser()
+      sb()
         .auth.setSession({ access_token: access, refresh_token: refresh })
         .then(({ error }) => {
           if (error) setErrore("Il link è scaduto o non è valido. Richiedi un nuovo codice.");
@@ -25,13 +26,14 @@ export default function ModuloAccesso() {
     } else if (h.get("error_description")) {
       setErrore("Il link è scaduto o non è valido. Richiedi un nuovo codice.");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function inviaCodice(e: React.FormEvent) {
     e.preventDefault();
     setErrore("");
     setAttesa(true);
-    const { error } = await supabaseBrowser().auth.signInWithOtp({
+    const { error } = await sb().auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/auth/callback` },
     });
@@ -51,7 +53,7 @@ export default function ModuloAccesso() {
     e.preventDefault();
     setErrore("");
     setAttesa(true);
-    const { error } = await supabaseBrowser().auth.verifyOtp({
+    const { error } = await sb().auth.verifyOtp({
       email: email.trim().toLowerCase(),
       token: codice.trim(),
       type: "email",
@@ -68,7 +70,7 @@ export default function ModuloAccesso() {
     e.preventDefault();
     setErrore("");
     setAttesa(true);
-    const { error } = await supabaseBrowser().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    const { error } = await sb().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     setAttesa(false);
     if (error) {
       setErrore(

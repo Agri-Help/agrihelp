@@ -1,9 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
-import { supabaseUrl, supabaseAnonKey } from "./config";
 
-export function supabaseBrowser() {
-  return createBrowserClient(
-    supabaseUrl(),
-    supabaseAnonKey(),
-  );
+/** Indirizzo e chiave pubblica arrivano dal server (pagina di accesso), mai da variabili nel codice del browser. */
+export function supabaseBrowser(url: string, chiavePubblica: string) {
+  return createBrowserClient(url, chiavePubblica);
 }
