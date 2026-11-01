@@ -71,7 +71,13 @@ export default function ModuloAccesso() {
     const { error } = await supabaseBrowser().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     setAttesa(false);
     if (error) {
-      setErrore("Email o password sbagliate.");
+      setErrore(
+        /invalid login credentials/i.test(error.message)
+          ? "Email o password sbagliate."
+          : /not confirmed/i.test(error.message)
+            ? "Questo utente non è confermato: in Supabase ricrealo con \"Auto Confirm\"."
+            : `Errore: ${error.message}`,
+      );
       return;
     }
     location.href = "/";
