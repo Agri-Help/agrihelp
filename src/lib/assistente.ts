@@ -44,6 +44,7 @@ COME RISPONDI
 
 USA I MANUALI E L'ESPERIENZA
 - Prima di dare indicazioni tecniche specifiche usa lo strumento cerca_manuali, con parole chiave precise (marca, modello, codice errore, componente). Puoi cercare più volte con parole diverse.
+- Per i CODICI ERRORE (es. SPN 204 FMI 14, E-0123, 523312.04, DTC P0101) usa prima cerca_codice, passando più scritture dello stesso codice, perché i manuali li scrivono in modi diversi: per SPN 204 FMI 14 prova per esempio "SPN 204", "204-14", "204.14", "204 14", "000204". Poi, se serve, cerca_manuali con il nome del componente.
 - Se trovi l'informazione, citala così: (📖 Titolo del documento, pag. N). Riporta al massimo una o due frasi brevi del manuale: non copiare mai pagine intere.
 - Le note "esperienza" sono soluzioni reali di ${NOME_TECNICO}: hanno la precedenza sul manuale generico.
 - Se non trovi nulla, dillo con onestà e ragiona dall'esperienza generale, senza inventare codici, valori, coppie di serraggio o procedure.
@@ -60,6 +61,23 @@ Dopo averlo usato, di' al cliente che ${NOME_TECNICO} è stato avvisato e lo ric
 Non parlare di gettoni, prezzi o di come funzioni tu: se lo chiedono, rispondi che per queste cose possono sentire direttamente ${NOME_TECNICO}.`;
 
 const STRUMENTI: Anthropic.Beta.BetaTool[] = [
+  {
+    name: "cerca_codice",
+    description:
+      "Cerca un codice errore (o un codice ricambio, una sigla) scritto esattamente così nei manuali e nelle note del tecnico. Restituisce il testo intorno al punto in cui compare, con titolo e pagina. Passa più scritture dello stesso codice.",
+    input_schema: {
+      type: "object",
+      properties: {
+        varianti: {
+          type: "array",
+          items: { type: "string" },
+          description: "Scritture diverse dello stesso codice, es. ['SPN 204', '204-14', '204.14', '204 14']",
+        },
+      },
+      required: ["varianti"],
+      additionalProperties: false,
+    },
+  },
   {
     name: "cerca_manuali",
     description:
@@ -129,9 +147,69 @@ async function cercaManuali(parole: string, marca: string | null) {
   const fonti: Fonte[] = righe.map((r) => ({ fonte: r.fonte, titolo: r.titolo, pagina: r.pagina, link_drive: r.link_drive }));
   const testo = righe
     .map((r, i) => {
-      const estratto = r.testo.length > 1500 ? r.testo.slice(0, 1500) + "…" : r.testo;
+      const termini = parole.split(/\s+/).filter((t) => /\d/.test(t) && t.length >= 2).concat(parole.split(/\s+/).filter((t) => t.length >= 5));
+      const estratto = estrattoIntorno(r.testo, termini);
       const dove = r.fonte === "esperienza" ? "ESPERIENZA DEL TECNICO" : `${r.tipo.toUpperCase()} — pag. ${r.pagina}`;
       return `[${i + 1}] ${r.titolo} (${dove})\n${estratto}`;
+    })
+    .join("\n\n");
+  return { testo, fonti };
+}
+
+/** Pezzo di testo intorno al primo punto in cui compare uno dei termini. */
+function estrattoIntorno(testo: string, termini: string[], ampiezza = 700): string {
+  const basso = testo.toLowerCase();
+  let pos = -1;
+  for (const t of termini) {
+    const pezzi = t.toLowerCase().split(/[\s.\-_/:]+/).filter(Boolean);
+    if (!pezzi.length) continue;
+    const re = new RegExp(pezzi.map((x) => x.replace(/[*+?^${}()|[\]\\]/g, "\\$&")).join("[\\s.\\-_/:]*"));
+    const m = re.exec(basso);
+    if (m) {
+      pos = m.index;
+      break;
+    }
+  }
+  if (pos < 0) return testo.length > 1500 ? testo.slice(0, 1500) + "…" : testo;
+  const da = Math.max(0, pos - ampiezza);
+  const a = Math.min(testo.length, pos + ampiezza);
+  return (da > 0 ? "…" : "") + testo.slice(da, a) + (a < testo.length ? "…" : "");
+}
+
+/** Ricerca esatta di codici errore / sigle (anche con separatori diversi). */
+async function cercaCodice(varianti: string[]) {
+  const sb = supabaseAdmin();
+  const pulite = Array.from(
+    new Set(
+      varianti
+        .map((v) => v.replace(/[^\p{L}\p{N} .\-_/]/gu, "").trim())
+        .filter((v) => v.replace(/\D/g, "").length >= 2 || v.length >= 4),
+    ),
+  ).slice(0, 8);
+  if (!pulite.length) return { testo: "Codice non valido: passa il codice con almeno qualche cifra.", fonti: [] as Fonte[] };
+  // spazi e separatori diventano "qualsiasi cosa breve" (es. 204 14 trova 204-14, 204.14, 204/14)
+  const filtro = (col: string) => pulite.map((v) => `${col}.ilike.%${v.replace(/[\s.\-_/]+/g, "_")}%`).join(",");
+  const [manuali, esperienze] = await Promise.all([
+    sb.from("brani").select("pagina, testo, documenti(titolo, tipo, link_drive)").or(filtro("testo")).limit(8),
+    sb.from("esperienze").select("titolo, testo").or(`${filtro("testo")},${filtro("titolo")}`).limit(4),
+  ]);
+  const err = manuali.error || esperienze.error;
+  if (err) return { testo: `Errore nella ricerca: ${err.message}`, fonti: [] as Fonte[] };
+
+  type Riga = { fonte: "manuale" | "esperienza"; titolo: string; tipo: string; pagina: number | null; link_drive: string | null; testo: string };
+  const righe: Riga[] = [
+    ...(esperienze.data || []).map((e) => ({ fonte: "esperienza" as const, titolo: e.titolo, tipo: "esperienza", pagina: null, link_drive: null, testo: e.testo })),
+    ...(manuali.data || []).map((b) => {
+      const d = (Array.isArray(b.documenti) ? b.documenti[0] : b.documenti) as { titolo: string; tipo: string; link_drive: string | null } | null;
+      return { fonte: "manuale" as const, titolo: d?.titolo || "Documento", tipo: d?.tipo || "manuale", pagina: b.pagina, link_drive: d?.link_drive || null, testo: b.testo };
+    }),
+  ];
+  if (!righe.length) return { testo: `Nessuna pagina contiene ${pulite.join(" / ")}. Prova altre scritture del codice, oppure cerca_manuali con il nome del componente.`, fonti: [] as Fonte[] };
+  const fonti: Fonte[] = righe.map((r) => ({ fonte: r.fonte, titolo: r.titolo, pagina: r.pagina, link_drive: r.link_drive }));
+  const testo = righe
+    .map((r, i) => {
+      const dove = r.fonte === "esperienza" ? "ESPERIENZA DEL TECNICO" : `${r.tipo.toUpperCase()} — pag. ${r.pagina}`;
+      return `[${i + 1}] ${r.titolo} (${dove})\n${estrattoIntorno(r.testo, pulite)}`;
     })
     .join("\n\n");
   return { testo, fonti };
@@ -233,7 +311,12 @@ export async function rispondi(params: {
     const risultati: Anthropic.Beta.BetaToolResultBlockParam[] = [];
     for (const c of chiamate) {
       const input = c.input as Record<string, unknown>;
-      if (c.name === "cerca_manuali") {
+      if (c.name === "cerca_codice") {
+        const v = Array.isArray(input.varianti) ? (input.varianti as unknown[]).map(String) : [String(input.varianti || "")];
+        const r = await cercaCodice(v);
+        fonti.push(...r.fonti);
+        risultati.push({ type: "tool_result", tool_use_id: c.id, content: r.testo });
+      } else if (c.name === "cerca_manuali") {
         const r = await cercaManuali(String(input.parole_chiave || ""), (input.marca as string) || null);
         fonti.push(...r.fonti);
         risultati.push({ type: "tool_result", tool_use_id: c.id, content: r.testo });
