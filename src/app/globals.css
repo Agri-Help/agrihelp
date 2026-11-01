@@ -1,26 +1,38 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-spazio: #0b1630;
+  --color-spazio-2: #13213f;
+  --color-spazio-3: #1c2d52;
+  --color-luna: #c9ccd3;
+  --color-campo: #4caf50;
+  --color-campo-scuro: #2e7d32;
+  --color-sole: #f59e0b;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html, body { height: 100%; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0b1630;
+  color: #e8eaf0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
+
+.campo-input {
+  @apply w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/40 outline-none focus:border-sole;
+}
+.bottone {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-sole px-5 py-3 font-semibold text-spazio active:scale-[.98] disabled:opacity-50;
+}
+.bottone-secondario {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 font-medium text-white active:scale-[.98] disabled:opacity-50;
+}
+.scheda { @apply rounded-2xl border border-white/10 bg-spazio-2 p-4; }
+
+.testo-ai p { margin: 0 0 .6em; }
+.testo-ai p:last-child { margin-bottom: 0; }
+.testo-ai ol, .testo-ai ul { margin: .3em 0 .6em 1.2em; }
+.testo-ai ol { list-style: decimal; }
+.testo-ai ul { list-style: disc; }
+.testo-ai li { margin: .2em 0; }
+.testo-ai strong { color: #fff; }

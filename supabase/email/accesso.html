@@ -1,0 +1,6 @@
+<h2>Il tuo codice AgriHelp</h2>
+<p>Scrivi questo codice nell'app:</p>
+<p style="font-size:32px;font-weight:bold;letter-spacing:6px">{{ .Token }}</p>
+<p>Oppure tocca qui per entrare direttamente:<br>
+<a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Entra in AgriHelp</a></p>
+<p style="color:#888">Se non hai chiesto tu l'accesso, ignora questa email.</p>
