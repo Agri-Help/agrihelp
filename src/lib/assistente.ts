@@ -45,6 +45,8 @@ COME RISPONDI
 
 USA I MANUALI E L'ESPERIENZA
 - Prima di dare indicazioni tecniche specifiche usa lo strumento cerca_manuali, con parole chiave precise (marca, modello, codice errore, componente). Puoi cercare più volte con parole diverse.
+- Hai l'elenco dei documenti caricati qui sotto. Se l'utente nomina un manuale o un sistema (es. PSM), o sai quale documento è quello giusto, usa leggi_documento su quel documento: cerca dentro e poi leggi le pagine utili. Per una procedura lunga (installazione, configurazione, calibrazione) leggi le pagine in ordine e guida l'utente un passo alla volta.
+- Non dire mai che un'informazione "non c'è" se non hai prima cercato dentro il documento giusto con leggi_documento.
 - Per i CODICI ERRORE (es. SPN 204 FMI 14, E-0123, 523312.04, DTC P0101) usa prima cerca_codice, passando più scritture dello stesso codice, perché i manuali li scrivono in modi diversi: per SPN 204 FMI 14 prova per esempio "SPN 204", "204-14", "204.14", "204 14", "000204". Poi, se serve, cerca_manuali con il nome del componente.
 - Se trovi l'informazione, citala così: (📖 Titolo del documento, pag. N). Riporta al massimo una o due frasi brevi del manuale: non copiare mai pagine intere.
 - Le note "esperienza" sono soluzioni reali di ${NOME_TECNICO}: hanno la precedenza sul manuale generico.
@@ -93,6 +95,22 @@ const STRUMENTI: Anthropic.Beta.BetaTool[] = [
       additionalProperties: false,
     },
     strict: true,
+  },
+  {
+    name: "leggi_documento",
+    description:
+      "Lavora dentro UN documento preciso dell'elenco (es. il manuale del PSM). Con 'cerca' trova le pagine di quel documento che parlano dell'argomento; senza 'cerca' legge le pagine indicate. Usalo quando l'utente nomina un manuale, quando sai quale documento è giusto, o per seguire una procedura pagina dopo pagina.",
+    input_schema: {
+      type: "object",
+      properties: {
+        documento: { type: "string", description: "Titolo (o parte del titolo) del documento, come nell'elenco dei documenti disponibili" },
+        cerca: { type: "string", description: "Parole da cercare dentro il documento (facoltativo)" },
+        pagina_da: { type: "integer", description: "Prima pagina da leggere (facoltativo)" },
+        pagina_a: { type: "integer", description: "Ultima pagina da leggere, al massimo 5 pagine per volta (facoltativo)" },
+      },
+      required: ["documento"],
+      additionalProperties: false,
+    },
   },
   {
     name: "passa_al_tecnico",
@@ -216,6 +234,109 @@ async function cercaCodice(varianti: string[]) {
   return { testo, fonti };
 }
 
+type Documento = { id: string; titolo: string; tipo: string; marca: string | null; modelli: string | null; pagine: number; link_drive: string | null };
+
+async function elencoDocumenti(): Promise<Documento[]> {
+  const { data } = await supabaseAdmin()
+    .from("documenti")
+    .select("id, titolo, tipo, marca, modelli, pagine, link_drive")
+    .order("titolo")
+    .limit(300);
+  return (data || []) as Documento[];
+}
+
+function descriviDocumenti(docs: Documento[]): string {
+  if (!docs.length) return "DOCUMENTI DISPONIBILI: nessuno caricato per ora.";
+  return (
+    "DOCUMENTI DISPONIBILI (usa il titolo con leggi_documento):\n" +
+    docs.map((d) => `- ${d.titolo} [${d.tipo}${d.marca ? `, ${d.marca}` : ""}${d.modelli ? `, ${d.modelli}` : ""}, ${d.pagine} pag.]`).join("\n")
+  );
+}
+
+/** Trova il documento giusto dal titolo (anche parziale, senza badare a maiuscole e simboli). */
+function trovaDocumento(docs: Documento[], nome: string): Documento | null {
+  const norm = (x: string) => x.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  const n = norm(nome);
+  if (!n) return null;
+  const esatto = docs.find((d) => norm(d.titolo) === n);
+  if (esatto) return esatto;
+  const contiene = docs.filter((d) => norm(d.titolo).includes(n) || n.includes(norm(d.titolo)));
+  if (contiene.length) return contiene[0];
+  // per parole: il documento con più parole in comune
+  const parole = n.split(" ").filter((p) => p.length >= 2);
+  let migliore: Documento | null = null;
+  let punti = 0;
+  for (const d of docs) {
+    const t = ` ${norm(d.titolo)} ${norm(d.modelli || "")} `;
+    const p = parole.filter((w) => t.includes(` ${w} `) || t.includes(w)).length;
+    if (p > punti) {
+      punti = p;
+      migliore = d;
+    }
+  }
+  return migliore;
+}
+
+async function leggiDocumento(docs: Documento[], input: Record<string, unknown>) {
+  const doc = trovaDocumento(docs, String(input.documento || ""));
+  if (!doc) return { testo: `Documento non trovato. Documenti disponibili:\n${docs.map((d) => d.titolo).join("\n")}`, fonti: [] as Fonte[] };
+  const sb = supabaseAdmin();
+  const cerca = String(input.cerca || "").trim();
+  const fonte = (pagina: number): Fonte => ({ fonte: "manuale", titolo: doc.titolo, pagina, link_drive: doc.link_drive });
+
+  if (cerca) {
+    const vuote = new Set(["il", "lo", "la", "le", "gli", "un", "una", "di", "da", "del", "della", "dei", "delle", "per", "con", "come", "che", "non", "sul", "sulla", "nel", "nella", "the", "and", "for", "with", "how", "to", "of", "in", "on", "is"]);
+    const parole = Array.from(
+      new Set(cerca.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => (w.length >= 3 || /\d/.test(w)) && !vuote.has(w))),
+    ).slice(0, 10);
+    if (!parole.length) return { testo: "Scrivi qualche parola da cercare.", fonti: [] as Fonte[] };
+    const cercaCon = (sep: string) =>
+      sb
+        .from("brani")
+        .select("pagina, testo")
+        .eq("documento_id", doc.id)
+        .textSearch("tsv", parole.map((w) => `${w}:*`).join(sep), { config: "simple" })
+        .limit(300);
+    // prima le pagine con tutte le parole, se sono poche quelle con almeno una
+    let { data, error } = await cercaCon(" & ");
+    if (!error && (data?.length ?? 0) < 3 && parole.length > 1) ({ data, error } = await cercaCon(" | "));
+    if (error) return { testo: `Errore nella ricerca: ${error.message}`, fonti: [] as Fonte[] };
+    // ordina per quante parole diverse compaiono nella pagina, poi per quante volte
+    const punteggio = (t: string) => {
+      const b = t.toLowerCase();
+      let diverse = 0;
+      let volte = 0;
+      for (const w of parole) {
+        const c = b.split(w).length - 1;
+        if (c) diverse++;
+        volte += Math.min(c, 10);
+      }
+      return diverse * 100 + volte;
+    };
+    const migliori = (data || []).map((r) => ({ ...r, p: punteggio(r.testo) })).sort((a, b) => b.p - a.p).slice(0, 6);
+    if (!migliori.length) return { testo: `In "${doc.titolo}" nessuna pagina contiene: ${parole.join(", ")}. Prova sinonimi o termini inglesi (i manuali sono spesso in inglese).`, fonti: [] as Fonte[] };
+    return {
+      testo:
+        `Documento: ${doc.titolo} (${doc.pagine} pagine). Pagine più pertinenti:\n\n` +
+        migliori.map((r) => `--- pag. ${r.pagina} ---\n${estrattoIntorno(r.testo, parole, 900)}`).join("\n\n") +
+        "\n\nPer leggere una pagina intera (o le successive) usa leggi_documento con pagina_da/pagina_a.",
+      fonti: migliori.map((r) => fonte(r.pagina)),
+    };
+  }
+
+  const da = Math.max(1, Number(input.pagina_da) || 1);
+  const a = Math.min(da + 4, Number(input.pagina_a) || da + 2, doc.pagine || da + 4);
+  const { data, error } = await sb.from("brani").select("pagina, testo").eq("documento_id", doc.id).gte("pagina", da).lte("pagina", a).order("pagina");
+  if (error) return { testo: `Errore nella lettura: ${error.message}`, fonti: [] as Fonte[] };
+  if (!data?.length) return { testo: `Nessun testo nelle pagine ${da}-${a} di "${doc.titolo}" (il documento ha ${doc.pagine} pagine).`, fonti: [] as Fonte[] };
+  return {
+    testo:
+      `Documento: ${doc.titolo} (${doc.pagine} pagine)\n\n` +
+      data.map((r) => `--- pag. ${r.pagina} ---\n${r.testo.length > 4000 ? r.testo.slice(0, 4000) + "…" : r.testo}`).join("\n\n"),
+    fonti: data.map((r) => fonte(r.pagina)),
+  };
+}
+
 /** Converte la cronologia salvata nel formato dei messaggi per Claude. */
 async function costruisciCronologia(messaggi: Messaggio[]): Promise<Anthropic.Beta.BetaMessageParam[]> {
   const sb = supabaseAdmin();
@@ -267,13 +388,15 @@ export async function rispondi(params: {
   const fonti: Fonte[] = [];
   let passataAlTecnico = false;
 
+  const documenti = await elencoDocumenti();
   const system: Anthropic.Beta.BetaTextBlockParam[] = [
     { type: "text", text: ISTRUZIONI, cache_control: { type: "ephemeral" } },
     { type: "text", text: `ISTRUZIONI DI ${NOME_TECNICO.toUpperCase()} (valgono sempre, hanno la precedenza sulle tue conoscenze generali):\n${await leggiIstruzioni()}` },
+    { type: "text", text: descriviDocumenti(documenti) },
     { type: "text", text: descriviCliente(params.profilo, params.macchine, params.macchinaScelta) },
   ];
 
-  for (let giro = 0; giro < 6; giro++) {
+  for (let giro = 0; giro < 10; giro++) {
     const base = { model: MODELLO, max_tokens: 16000, system, tools: STRUMENTI, messages: cronologia };
     let risposta: Anthropic.Beta.BetaMessage;
     try {
@@ -313,7 +436,11 @@ export async function rispondi(params: {
     const risultati: Anthropic.Beta.BetaToolResultBlockParam[] = [];
     for (const c of chiamate) {
       const input = c.input as Record<string, unknown>;
-      if (c.name === "cerca_codice") {
+      if (c.name === "leggi_documento") {
+        const r = await leggiDocumento(documenti, input);
+        fonti.push(...r.fonti);
+        risultati.push({ type: "tool_result", tool_use_id: c.id, content: r.testo });
+      } else if (c.name === "cerca_codice") {
         const v = Array.isArray(input.varianti) ? (input.varianti as unknown[]).map(String) : [String(input.varianti || "")];
         const r = await cercaCodice(v);
         fonti.push(...r.fonti);
