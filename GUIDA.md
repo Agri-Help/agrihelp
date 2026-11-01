@@ -64,7 +64,7 @@ Se più avanti vuoi un dominio tuo (es. `app.agrihelp.it`), si aggiunge in Verce
 
 ## 4. Primo accesso
 
-1. Apri l'indirizzo dal telefono, scrivi la tua email, inserisci il codice che ti arriva.
+1. Apri l'indirizzo dal telefono, scrivi la tua email, inserisci il codice che ti arriva. In alternativa tocca "Entra con la password" e usa la password che hai impostato per il tuo utente in Supabase.
 2. Entri nel **Pannello tecnico**. Da lì:
    - **Clienti → Invita un nuovo cliente**: nome, email, telefono, gettoni (100 alla vendita) e la sua prima macchina. Il cliente riceve un'email e entra con un tocco.
    - **Manuali**: scegli i PDF e premi "Indicizza". L'assistente li userà subito.
