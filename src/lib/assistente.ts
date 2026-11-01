@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { leggiIstruzioni } from "@/lib/istruzioni";
 import { supabaseAdmin } from "./supabase/server";
 import type { Fonte, Macchina, Messaggio, Profilo } from "./tipi";
 import { nomeMacchina } from "./tipi";
@@ -268,6 +269,7 @@ export async function rispondi(params: {
 
   const system: Anthropic.Beta.BetaTextBlockParam[] = [
     { type: "text", text: ISTRUZIONI, cache_control: { type: "ephemeral" } },
+    { type: "text", text: `ISTRUZIONI DI ${NOME_TECNICO.toUpperCase()} (valgono sempre, hanno la precedenza sulle tue conoscenze generali):\n${await leggiIstruzioni()}` },
     { type: "text", text: descriviCliente(params.profilo, params.macchine, params.macchinaScelta) },
   ];
 

@@ -188,3 +188,13 @@ export async function eliminaDocumento(f: FormData) {
   await supabaseAdmin().from("documenti").delete().eq("id", s(f, "id"));
   revalidatePath("/admin/manuali");
 }
+
+// ---------- ISTRUZIONI PER L'ASSISTENTE ----------
+
+export async function salvaIstruzioni(f: FormData) {
+  await richiediAdmin();
+  const { salvaIstruzioniTesto } = await import("@/lib/istruzioni");
+  await salvaIstruzioniTesto(s(f, "testo").slice(0, 20000));
+  revalidatePath("/admin/istruzioni");
+  redirect("/admin/istruzioni?salvato=1");
+}

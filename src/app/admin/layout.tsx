@@ -16,6 +16,7 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
     { href: "/admin/clienti", label: "Clienti" },
     { href: "/admin/manuali", label: "Manuali" },
     { href: "/admin/esperienza", label: "La mia esperienza" },
+    { href: "/admin/istruzioni", label: "Istruzioni" },
   ];
   return (
     <div className="mx-auto min-h-dvh max-w-4xl">
