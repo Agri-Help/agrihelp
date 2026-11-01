@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { clienteAnthropic, spiegaErroreAnthropic, chiaveAnthropic } from "@/lib/assistente";
 import { supabaseUrl, supabaseServiceKey, supabaseAnonKey, diagnosiChiavi } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
@@ -33,10 +34,19 @@ export default async function Stato() {
       database = `errore: ${e instanceof Error ? e.message : "sconosciuto"}`;
     }
   }
+  let anthropic = "non controllato";
+  if (chiaveAnthropic()) {
+    try {
+      await clienteAnthropic().models.list({ limit: 1 });
+      anthropic = "ok";
+    } catch (e) {
+      anthropic = `errore: ${spiegaErroreAnthropic(e)}`;
+    }
+  }
   const chiavi = diagnosiChiavi();
   const pubblicaOk = !!supabaseAnonKey();
   const segretaOk = !!service;
-  const tuttoOk = pubblicaOk && segretaOk && righe.every((r) => r.presente || !r.obbligatoria) && database === "ok";
+  const tuttoOk = pubblicaOk && segretaOk && righe.every((r) => r.presente || !r.obbligatoria) && database === "ok" && anthropic === "ok";
 
   return (
     <main className="mx-auto max-w-xl p-5">
@@ -73,6 +83,9 @@ export default async function Stato() {
         </li>
         <li className="mt-2 border-t border-white/10 pt-2 text-sm">
           {database === "ok" ? "✅" : "❌"} Collegamento al database: {database}
+        </li>
+        <li className="text-sm">
+          {anthropic === "ok" ? "✅" : "❌"} Collegamento ad Anthropic (Claude): {anthropic}
         </li>
       </ul>
       <p className="mt-4 text-sm text-white/70">

@@ -28,7 +28,7 @@ export default async function SchedaCliente({ params, searchParams }: { params: 
           <div className="text-xl font-bold">{c.nome || c.email}</div>
           <div className="text-sm text-white/60">{c.email}{c.telefono ? ` · ${c.telefono}` : ""}</div>
         </div>
-        <div className="text-2xl font-bold">🪙 {c.gettoni}</div>
+        <div className="text-2xl font-bold">🎟️ {c.gettoni}</div>
       </div>
 
       {/* Gettoni */}

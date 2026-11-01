@@ -53,7 +53,7 @@ export default async function Clienti({ searchParams }: { searchParams: Promise<
                 {c.email} · 🚜 {(c.macchine as unknown[]).length}
               </div>
             </div>
-            <div className={`rounded-full px-3 py-1 text-sm font-semibold ${c.gettoni <= 5 ? "bg-red-500/20 text-red-200" : "bg-white/10"}`}>🪙 {c.gettoni}</div>
+            <div className={`rounded-full px-3 py-1 text-sm font-semibold ${c.gettoni <= 5 ? "bg-red-500/20 text-red-200" : "bg-white/10"}`}>🎟️ {c.gettoni}</div>
           </Link>
         ))}
         {clienti.length === 0 && <p className="text-white/50">Nessun cliente ancora.</p>}

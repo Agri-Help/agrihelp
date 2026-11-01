@@ -3,7 +3,32 @@ import { supabaseAdmin } from "./supabase/server";
 import type { Fonte, Macchina, Messaggio, Profilo } from "./tipi";
 import { nomeMacchina } from "./tipi";
 
-const MODELLO = process.env.CLAUDE_MODEL || "claude-opus-5-5";
+const MODELLO = (process.env.CLAUDE_MODEL || "").trim() || "claude-opus-5-5";
+
+/** Chiave Anthropic ripulita (spazi, virgolette, "NOME=" incollati per sbaglio). */
+export function chiaveAnthropic(): string {
+  return (process.env.ANTHROPIC_API_KEY ?? "")
+    .trim()
+    .replace(/^[A-Z_]+\s*=\s*/, "")
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .trim();
+}
+
+export function clienteAnthropic() {
+  return new Anthropic({ apiKey: chiaveAnthropic() });
+}
+
+/** Spiega in italiano un errore di Anthropic (per il tecnico e la pagina di controllo). */
+export function spiegaErroreAnthropic(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  const stato = (e as { status?: number })?.status;
+  if (stato === 401 || /api.key|authentication/i.test(msg)) return "chiave Anthropic non valida (ANTHROPIC_API_KEY)";
+  if (/credit balance|billing|purchase credits/i.test(msg)) return "credito Anthropic esaurito: ricarica su console.anthropic.com → Billing";
+  if (stato === 403) return "la chiave Anthropic non ha i permessi";
+  if (stato === 429) return "troppe richieste o limite di spesa raggiunto su Anthropic";
+  if (stato === 529 || stato === 503) return "Anthropic è sovraccarico, riprova tra poco";
+  return `${stato ?? ""} ${msg}`.trim().slice(0, 300);
+}
 const NOME_TECNICO = process.env.NOME_TECNICO || "il tecnico";
 
 const ISTRUZIONI = `Sei l'assistente di AgriHelp, il servizio di assistenza tecnica di ${NOME_TECNICO}, tecnico specializzato in guide satellitari (GPS/RTK, sterzo automatico, display, ISOBUS) e macchine agricole (trattori e attrezzi).
@@ -158,7 +183,7 @@ export async function rispondi(params: {
   messaggi: Messaggio[];
   conversazioneId: string;
 }): Promise<RisultatoAssistente> {
-  const client = new Anthropic();
+  const client = clienteAnthropic();
   const cronologia = await costruisciCronologia(params.messaggi);
   const fonti: Fonte[] = [];
   let passataAlTecnico = false;
@@ -169,16 +194,21 @@ export async function rispondi(params: {
   ];
 
   for (let giro = 0; giro < 6; giro++) {
-    const risposta = await client.beta.messages.create({
-      model: MODELLO,
-      max_tokens: 16000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: { effort: "medium" },
-      system,
-      tools: STRUMENTI,
-      messages: cronologia,
-    } as Anthropic.Beta.MessageCreateParamsNonStreaming);
+    const base = { model: MODELLO, max_tokens: 16000, system, tools: STRUMENTI, messages: cronologia };
+    let risposta: Anthropic.Beta.BetaMessage;
+    try {
+      risposta = await client.beta.messages.create({
+        ...base,
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default",
+        output_config: { effort: "medium" },
+      } as Anthropic.Beta.MessageCreateParamsNonStreaming);
+    } catch (e) {
+      // richiesta rifiutata per i parametri opzionali: riprova con quelli essenziali
+      if ((e as { status?: number })?.status !== 400 || /credit balance|billing/i.test(String(e))) throw e;
+      console.error("Riprovo senza parametri opzionali", e);
+      risposta = await client.beta.messages.create(base as Anthropic.Beta.MessageCreateParamsNonStreaming);
+    }
 
     cronologia.push({ role: "assistant", content: risposta.content as Anthropic.Beta.BetaContentBlockParam[] });
 

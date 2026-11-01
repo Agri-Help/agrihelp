@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { utenteApi } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { rispondi, titoloDa } from "@/lib/assistente";
+import { rispondi, titoloDa, spiegaErroreAnthropic } from "@/lib/assistente";
 import type { Macchina, Messaggio } from "@/lib/tipi";
 import { conUrlFoto } from "@/lib/foto";
 
@@ -93,7 +93,13 @@ export async function POST(req: Request) {
     // restituisce il gettone se l'assistente non ha risposto
     if (profilo.ruolo !== "admin") await sb.rpc("ricarica_gettoni", { p_cliente: profilo.id, p_quantita: 1, p_motivo: "Rimborso: errore dell'assistente" });
     return NextResponse.json(
-      { errore: "L'assistente non risponde in questo momento. Riprova tra poco.", conversazioneId },
+      {
+        errore:
+          profilo.ruolo === "admin"
+            ? `L'assistente non risponde. Motivo: ${spiegaErroreAnthropic(e)}`
+            : "L'assistente non risponde in questo momento. Riprova tra poco.",
+        conversazioneId,
+      },
       { status: 502 },
     );
   }

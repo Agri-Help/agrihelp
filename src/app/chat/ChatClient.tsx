@@ -224,7 +224,7 @@ export default function ChatClient({ profilo, macchine, conversazioniIniziali, t
           className={`rounded-full px-3 py-1 text-sm font-semibold ${gettoni <= 5 && !illimitati ? "bg-red-500/20 text-red-200" : "bg-white/10 text-white"}`}
           title="Gettoni rimasti: ogni domanda usa un gettone"
         >
-          🪙 {illimitati ? "∞" : gettoni}
+          🎟️ {illimitati ? "∞" : gettoni}
         </div>
       </header>
 
@@ -378,7 +378,7 @@ export default function ChatClient({ profilo, macchine, conversazioniIniziali, t
               <Logo size={30} />
               <div className="flex-1">
                 <div className="font-semibold">{profilo.nome || profilo.email}</div>
-                <div className="text-xs text-white/50">🪙 {illimitati ? "illimitati" : `${gettoni} gettoni`}</div>
+                <div className="text-xs text-white/50">🎟️ {illimitati ? "illimitati" : `${gettoni} gettoni`}</div>
               </div>
             </div>
             <button onClick={nuova} className="bottone mb-4">+ Nuova richiesta</button>

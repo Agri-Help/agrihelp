@@ -30,7 +30,7 @@ export default async function Caso({ params, searchParams }: { params: Promise<{
         <div className="text-lg font-bold">{c.titolo}</div>
         <div className="mt-1 text-white/80">
           <Link className="underline" href={`/admin/clienti/${p.id}`}>{p.nome || p.email}</Link>
-          {p.azienda ? ` · ${p.azienda}` : ""} · 🪙 {p.gettoni}
+          {p.azienda ? ` · ${p.azienda}` : ""} · 🎟️ {p.gettoni}
         </div>
         {m && (
           <div className="text-sm text-white/60">
