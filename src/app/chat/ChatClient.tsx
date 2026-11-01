@@ -2,8 +2,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/Scena";
 import { TestoAI } from "@/components/TestoAI";
-import { riduciFoto } from "@/lib/immagini";
+import { fotogrammiDaVideo, riduciFoto } from "@/lib/immagini";
 import { nomeMacchina, type Conversazione, type Macchina, type Messaggio, type Profilo } from "@/lib/tipi";
+
+// Foto per messaggio (un video diventa alcuni fotogrammi)
+const MAX_FOTO = 4;
 
 type Props = {
   profilo: Profilo;
@@ -41,6 +44,9 @@ export default function ChatClient({ profilo, macchine, conversazioniIniziali, t
   const riconoscimento = useRef<Riconoscimento | null>(null);
   const testoPrimaDettatura = useRef("");
   const fileInput = useRef<HTMLInputElement>(null);
+  const galleriaInput = useRef<HTMLInputElement>(null);
+  const [sceltaFoto, setSceltaFoto] = useState(false);
+  const [leggoVideo, setLeggoVideo] = useState(false);
 
   const illimitati = profilo.ruolo === "admin";
   const nome = profilo.nome?.split(" ")[0] || "";
@@ -143,15 +149,29 @@ export default function ChatClient({ profilo, macchine, conversazioniIniziali, t
 
   async function aggiungiFoto(files: FileList | null) {
     if (!files) return;
+    setErrore("");
     const nuove: string[] = [];
-    for (const f of Array.from(files).slice(0, 4 - foto.length)) {
+    for (const f of Array.from(files)) {
+      const posti = MAX_FOTO - foto.length - nuove.length;
+      if (posti <= 0) break;
+      if (f.type.startsWith("video/")) {
+        setLeggoVideo(true);
+        try {
+          nuove.push(...(await fotogrammiDaVideo(f, posti)));
+        } catch {
+          setErrore("Non riesco a leggere questo video. Prova con una foto o un video più corto.");
+        } finally {
+          setLeggoVideo(false);
+        }
+        continue;
+      }
       try {
         nuove.push(await riduciFoto(f));
       } catch {
         setErrore("Non riesco a leggere questa foto.");
       }
     }
-    setFoto((p) => [...p, ...nuove].slice(0, 4));
+    setFoto((p) => [...p, ...nuove].slice(0, MAX_FOTO));
   }
 
   function avviaDettatura() {
@@ -249,7 +269,7 @@ export default function ChatClient({ profilo, macchine, conversazioniIniziali, t
               <div className="rounded-2xl rounded-tl-sm bg-spazio-2 px-4 py-3">
                 <p className="text-lg">Ciao{nome ? ` ${nome}` : ""}! 👋 Che succede?</p>
                 <p className="mt-1 text-white/70">
-                  Raccontami il problema scrivendo o toccando il microfono 🎤, e se puoi scatta una foto 📷 del display o del pezzo.
+                  Raccontami il problema scrivendo o toccando il microfono 🎤, e se puoi manda una foto 📷 del display o del pezzo (anche dalla galleria o un breve video, per esempio dagli occhiali smart).
                 </p>
               </div>
             </div>
@@ -328,14 +348,36 @@ export default function ChatClient({ profilo, macchine, conversazioniIniziali, t
         )}
         <div className="flex items-end gap-2">
           <input ref={fileInput} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { aggiungiFoto(e.target.files); e.target.value = ""; }} />
-          <button
-            onClick={() => fileInput.current?.click()}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-xl"
-            aria-label="Scatta una foto"
-            disabled={foto.length >= 4}
-          >
-            📷
-          </button>
+          <input ref={galleriaInput} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => { aggiungiFoto(e.target.files); e.target.value = ""; }} />
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setSceltaFoto((x) => !x)}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-xl"
+              aria-label="Aggiungi foto o video"
+              disabled={foto.length >= MAX_FOTO || leggoVideo}
+            >
+              {leggoVideo ? "⏳" : "📷"}
+            </button>
+            {sceltaFoto && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setSceltaFoto(false)} />
+                <div className="absolute bottom-14 left-0 z-20 w-56 overflow-hidden rounded-xl bg-neutral-900 text-sm shadow-lg ring-1 ring-white/10">
+                  <button
+                    className="block w-full px-4 py-3 text-left hover:bg-white/10"
+                    onClick={() => { setSceltaFoto(false); fileInput.current?.click(); }}
+                  >
+                    📷 Scatta una foto
+                  </button>
+                  <button
+                    className="block w-full border-t border-white/10 px-4 py-3 text-left hover:bg-white/10"
+                    onClick={() => { setSceltaFoto(false); galleriaInput.current?.click(); }}
+                  >
+                    🖼️ Dalla galleria (foto o video)
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <textarea
             className="campo-input max-h-40 min-h-12 flex-1 resize-none py-3"
             rows={1}
