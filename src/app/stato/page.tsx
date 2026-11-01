@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { supabaseUrl, supabaseServiceKey } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +19,13 @@ export default async function Stato() {
   const righe = VARIABILI.map((v) => ({ ...v, presente: !!process.env[v.nome]?.trim() }));
 
   let database = "non controllato";
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = supabaseUrl();
+  const service = supabaseServiceKey();
+  // L'indirizzo di Supabase non è segreto (finisce comunque nell'app): lo mostriamo per controllo
+  const urlOk = /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(url);
   if (url && service) {
     try {
-      const { error } = await createClient(url.trim(), service.trim(), { auth: { persistSession: false } })
+      const { error } = await createClient(url, service, { auth: { persistSession: false } })
         .from("profili")
         .select("id", { head: true, count: "exact" });
       database = error ? `errore: ${error.message}` : "ok";
@@ -44,6 +47,16 @@ export default async function Stato() {
             {!r.presente && <span className="ml-auto font-sans text-xs text-white/50">{r.obbligatoria ? "manca" : "facoltativa"}</span>}
           </li>
         ))}
+        {url && (
+          <li className="mt-2 border-t border-white/10 pt-2 text-sm">
+            {urlOk ? "✅" : "⚠️"} Indirizzo Supabase letto: <span className="break-all font-mono">{url}</span>
+            {!urlOk && (
+              <span className="block text-white/60">
+                Deve essere tipo https://abcdefghijklmnop.supabase.co (lo trovi in Supabase → Project Settings → API → Project URL).
+              </span>
+            )}
+          </li>
+        )}
         <li className="mt-2 border-t border-white/10 pt-2 text-sm">
           {database === "ok" ? "✅" : "❌"} Collegamento al database: {database}
         </li>
