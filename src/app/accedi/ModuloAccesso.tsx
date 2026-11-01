@@ -5,7 +5,8 @@ import { supabaseBrowser } from "@/lib/supabase/browser";
 export default function ModuloAccesso() {
   const [email, setEmail] = useState("");
   const [codice, setCodice] = useState("");
-  const [fase, setFase] = useState<"email" | "codice">("email");
+  const [fase, setFase] = useState<"email" | "codice" | "password">("email");
+  const [password, setPassword] = useState("");
   const [attesa, setAttesa] = useState(false);
   const [errore, setErrore] = useState("");
 
@@ -63,6 +64,35 @@ export default function ModuloAccesso() {
     location.href = "/";
   }
 
+  async function entraConPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setErrore("");
+    setAttesa(true);
+    const { error } = await supabaseBrowser().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    setAttesa(false);
+    if (error) {
+      setErrore("Email o password sbagliate.");
+      return;
+    }
+    location.href = "/";
+  }
+
+  if (fase === "password") {
+    return (
+      <form onSubmit={entraConPassword} className="flex flex-col gap-3">
+        <label className="text-white/80" htmlFor="email">La tua email</label>
+        <input id="email" className="campo-input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <label className="text-white/80" htmlFor="password">Password</label>
+        <input id="password" className="campo-input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        {errore && <p className="text-sm text-red-300">{errore}</p>}
+        <button className="bottone" disabled={attesa}>{attesa ? "Controllo…" : "Entra"}</button>
+        <button type="button" className="text-sm text-white/60 underline" onClick={() => { setErrore(""); setFase("email"); }}>
+          Entra invece con un codice via email
+        </button>
+      </form>
+    );
+  }
+
   if (fase === "codice") {
     return (
       <form onSubmit={verifica} className="flex flex-col gap-3">
@@ -111,6 +141,9 @@ export default function ModuloAccesso() {
         {attesa ? "Invio…" : "Ricevi il codice di accesso"}
       </button>
       <p className="text-xs text-white/50">Accesso riservato ai clienti invitati. Niente password: ti mandiamo un codice via email.</p>
+      <button type="button" className="text-sm text-white/60 underline" onClick={() => { setErrore(""); setFase("password"); }}>
+        Hai una password? Entra con la password
+      </button>
     </form>
   );
 }
