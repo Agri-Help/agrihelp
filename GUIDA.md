@@ -42,7 +42,7 @@ Una domanda costa indicativamente pochi centesimi (di più se ci sono foto). Il 
 
 1. Vai su <https://vercel.com>, entra **con GitHub**.
 2. **Add New → Project** → scegli il repository `agrihelp` → **Import**.
-3. Apri **Environment Variables** e aggiungi (nome = valore):
+3. Apri **Settings → Environments → Production → Environment Variables** e aggiungi (nome = valore):
 
 | Nome | Valore |
 |---|---|
