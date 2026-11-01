@@ -3,6 +3,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Stato = { nome: string; msg: string; ok?: boolean };
+type PdfJs = Awaited<ReturnType<typeof import("unpdf").getResolvedPDFJS>>;
+
+/**
+ * Apre il PDF leggendo il file a pezzi (1 MB alla volta) invece di caricarlo tutto in memoria:
+ * così funzionano anche manuali da centinaia di MB.
+ */
+async function apriPdf(pdfjs: PdfJs, f: File) {
+  const iniziale = new Uint8Array(await f.slice(0, Math.min(f.size, 1 << 20)).arrayBuffer());
+  const trasporto = new pdfjs.PDFDataRangeTransport(f.size, iniziale);
+  trasporto.requestDataRange = (inizio: number, fine: number) => {
+    f.slice(inizio, fine)
+      .arrayBuffer()
+      .then((b) => trasporto.onDataRange(inizio, new Uint8Array(b)));
+  };
+  return pdfjs.getDocument({
+    range: trasporto,
+    rangeChunkSize: 1 << 20,
+    disableAutoFetch: true,
+    disableStream: true,
+  }).promise;
+}
 
 export default function CaricaManuali() {
   const router = useRouter();
@@ -21,50 +42,76 @@ export default function CaricaManuali() {
     if (!files.length) return;
     setLavoro(true);
     setStati(files.map((f) => ({ nome: f.name, msg: "In attesa" })));
-    const { getDocumentProxy, extractText } = await import("unpdf");
+    const { getResolvedPDFJS } = await import("unpdf");
+    const pdfjs = await getResolvedPDFJS();
 
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
       try {
-        aggiorna(i, { msg: "Leggo il PDF…" });
-        const pdf = await getDocumentProxy(new Uint8Array(await f.arrayBuffer()));
-        const { totalPages, text } = await extractText(pdf, { mergePages: false });
-        const caratteri = text.reduce((a, t) => a + t.trim().length, 0);
-        if (caratteri < totalPages * 30) {
-          aggiorna(i, { msg: "⚠️ Sembra un PDF scansionato (solo immagini): non contiene testo da leggere. Serve una versione con testo.", ok: false });
-          continue;
-        }
-        const crea = await fetch("/api/admin/manuali", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            azione: "crea",
-            titolo: f.name.replace(/\.pdf$/i, "").replace(/[_]+/g, " "),
-            tipo,
-            marca,
-            modelli,
-            link_drive: files.length === 1 ? link : "",
-            pagine: totalPages,
-          }),
-        });
-        const { id, errore } = await crea.json();
-        if (!id) throw new Error(errore || "errore");
-        for (let p = 0; p < text.length; p += 25) {
-          aggiorna(i, { msg: `Salvo pagine ${p + 1}–${Math.min(p + 25, text.length)} di ${text.length}…` });
+        aggiorna(i, { msg: "Apro il PDF…" });
+        const pdf = await apriPdf(pdfjs, f);
+        const totale = pdf.numPages;
+
+        let id: string | null = null;
+        let lotto: { pagina: number; testo: string }[] = [];
+        let caratteri = 0;
+        const salva = async () => {
+          if (!lotto.length) return;
           const r = await fetch("/api/admin/manuali", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              azione: "pagine",
-              documento_id: id,
-              pagine: text.slice(p, p + 25).map((t, k) => ({ pagina: p + k + 1, testo: t })),
-            }),
+            body: JSON.stringify({ azione: "pagine", documento_id: id, pagine: lotto }),
           });
-          if (!r.ok) throw new Error((await r.json()).errore || "errore nel salvataggio");
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).errore || "errore nel salvataggio");
+          lotto = [];
+        };
+
+        for (let n = 1; n <= totale; n++) {
+          if (n % 5 === 1) aggiorna(i, { msg: `Leggo pagina ${n} di ${totale}…` });
+          const pagina = await pdf.getPage(n);
+          const contenuto = await pagina.getTextContent();
+          const testo = contenuto.items
+            .map((it) => ("str" in it ? it.str + (it.hasEOL ? "\n" : " ") : ""))
+            .join("")
+            .replace(/[ \t]+/g, " ")
+            .trim();
+          pagina.cleanup();
+          caratteri += testo.length;
+          lotto.push({ pagina: n, testo });
+
+          // dopo le prime pagine controlla che il PDF abbia testo, poi crea il documento
+          if (!id && (n === Math.min(60, totale))) {
+            if (caratteri < n * 30) {
+              throw new Error("⚠️ Sembra un PDF scansionato (solo immagini): non contiene testo da leggere. Serve una versione con testo.");
+            }
+            const crea = await fetch("/api/admin/manuali", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                azione: "crea",
+                titolo: f.name.replace(/\.pdf$/i, "").replace(/[_]+/g, " "),
+                tipo,
+                marca,
+                modelli,
+                link_drive: files.length === 1 ? link : "",
+                pagine: totale,
+              }),
+            });
+            const j = await crea.json();
+            if (!j.id) throw new Error(j.errore || "errore");
+            id = j.id;
+          }
+          if (id && lotto.length >= 25) {
+            aggiorna(i, { msg: `Salvo fino a pagina ${n} di ${totale}…` });
+            await salva();
+          }
         }
-        aggiorna(i, { msg: `✅ Fatto (${totalPages} pagine)`, ok: true });
+        await salva();
+        await pdf.cleanup();
+        aggiorna(i, { msg: `✅ Fatto (${totale} pagine)`, ok: true });
       } catch (err) {
-        aggiorna(i, { msg: `❌ ${err instanceof Error ? err.message : "Errore"}`, ok: false });
+        const m = err instanceof Error ? err.message : "Errore";
+        aggiorna(i, { msg: m.startsWith("⚠️") ? m : `❌ ${m}`, ok: false });
       }
     }
     setLavoro(false);
