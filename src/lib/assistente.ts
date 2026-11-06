@@ -3,6 +3,7 @@ import { leggiIstruzioni } from "@/lib/istruzioni";
 import { supabaseAdmin } from "./supabase/server";
 import type { Fonte, Macchina, Messaggio, Profilo } from "./tipi";
 import { nomeMacchina } from "./tipi";
+import { CATEGORIE, nomeCategoria, nomeTipo } from "./categorie";
 
 const MODELLO = (process.env.CLAUDE_MODEL || "").trim() || "claude-opus-5-5";
 
@@ -234,22 +235,33 @@ async function cercaCodice(varianti: string[]) {
   return { testo, fonti };
 }
 
-type Documento = { id: string; titolo: string; tipo: string; marca: string | null; modelli: string | null; pagine: number; link_drive: string | null };
+type Documento = {
+  id: string;
+  titolo: string;
+  tipo: string;
+  categoria?: string | null;
+  marca: string | null;
+  modelli: string | null;
+  pagine: number;
+  link_drive: string | null;
+};
 
 async function elencoDocumenti(): Promise<Documento[]> {
-  const { data } = await supabaseAdmin()
-    .from("documenti")
-    .select("id, titolo, tipo, marca, modelli, pagine, link_drive")
-    .order("titolo")
-    .limit(300);
+  // "*" così funziona anche se il database non ha ancora la colonna categoria
+  const { data } = await supabaseAdmin().from("documenti").select("*").order("titolo").limit(500);
   return (data || []) as Documento[];
 }
 
 function descriviDocumenti(docs: Documento[]): string {
   if (!docs.length) return "DOCUMENTI DISPONIBILI: nessuno caricato per ora.";
+  const riga = (d: Documento) =>
+    `- ${d.titolo} [${nomeTipo(d.tipo)}${d.marca ? `, ${d.marca}` : ""}${d.modelli ? `, ${d.modelli}` : ""}, ${d.pagine} pag.]`;
+  const gruppi = [...CATEGORIE.map((c) => c.id as string), ""]
+    .map((id) => ({ id, docs: docs.filter((d) => (d.categoria || "") === id) }))
+    .filter((g) => g.docs.length);
   return (
-    "DOCUMENTI DISPONIBILI (usa il titolo con leggi_documento):\n" +
-    docs.map((d) => `- ${d.titolo} [${d.tipo}${d.marca ? `, ${d.marca}` : ""}${d.modelli ? `, ${d.modelli}` : ""}, ${d.pagine} pag.]`).join("\n")
+    "DOCUMENTI DISPONIBILI per categoria (usa il titolo con leggi_documento; scegli prima quelli della marca e del modello della macchina del cliente):\n" +
+    gruppi.map((g) => `${g.id ? nomeCategoria(g.id).toUpperCase() : "SENZA CATEGORIA"}\n${g.docs.map(riga).join("\n")}`).join("\n\n")
   );
 }
 
