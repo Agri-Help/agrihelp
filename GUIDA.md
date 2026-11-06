@@ -95,6 +95,15 @@ I PDF scansionati (solo immagini) vengono saltati perché non hanno testo; per q
 
 ---
 
+## 7. Aggiornamento: categorie dei manuali (novembre 2026)
+
+1. In Supabase apri **SQL Editor → New query**, incolla tutto il file `supabase/migrations/0002_categorie_manuali.sql` e premi **Run**. Non cancella nessun dato e si può rieseguire.
+2. Nel pannello apri **Manuali**: in alto trovi il riquadro **Da riordinare**. Premi **Prepara le proposte**: l'assistente legge la copertina di ogni manuale e propone nome, categoria (Trattori, Attrezzature, Telescopici, Mietitrebbie e raccolta, Guida satellitare e GPS, Altro), marca, modello e tipo.
+3. Controlla le proposte, correggi se serve e premi **Conferma** (o **Conferma tutte**). Finché non confermi, nessun dato cambia.
+4. I manuali nuovi ricevono la proposta in automatico subito dopo il caricamento.
+
+Ogni proposta è una piccola domanda all'assistente: costa pochi centesimi per manuale.
+
 ## Come funziona, in breve
 
 - **Gettoni**: ogni domanda del cliente scala 1 gettone. Se l'assistente va in errore il gettone viene restituito. "Passa al tecnico" non costa gettoni. Lo storico movimenti per cliente è nella sua scheda (utile per le fatture).

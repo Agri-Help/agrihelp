@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CATEGORIE, TIPI } from "@/lib/categorie";
 
 type Stato = { nome: string; msg: string; ok?: boolean };
 type PdfJs = Awaited<ReturnType<typeof import("unpdf").getResolvedPDFJS>>;
@@ -29,6 +30,7 @@ export default function CaricaManuali() {
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [tipo, setTipo] = useState("manuale");
+  const [categoria, setCategoria] = useState("");
   const [marca, setMarca] = useState("");
   const [modelli, setModelli] = useState("");
   const [link, setLink] = useState("");
@@ -91,6 +93,7 @@ export default function CaricaManuali() {
                 azione: "crea",
                 titolo: f.name.replace(/\.pdf$/i, "").replace(/[_]+/g, " "),
                 tipo,
+                categoria,
                 marca,
                 modelli,
                 link_drive: files.length === 1 ? link : "",
@@ -108,7 +111,17 @@ export default function CaricaManuali() {
         }
         await salva();
         await pdf.cleanup();
-        aggiorna(i, { msg: `✅ Fatto (${totale} pagine)`, ok: true });
+        aggiorna(i, { msg: `✅ Fatto (${totale} pagine). Preparo la proposta di nome e categoria…`, ok: true });
+        const p = await fetch("/api/admin/manuali", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ azione: "proponi", documento_id: id }),
+        }).catch(() => null);
+        aggiorna(i, {
+          msg: p?.ok
+            ? `✅ Fatto (${totale} pagine). Controlla la proposta qui sotto e conferma.`
+            : `✅ Fatto (${totale} pagine). Proposta automatica non riuscita: puoi riprovarla qui sotto.`,
+        });
       } catch (err) {
         const m = err instanceof Error ? err.message : "Errore";
         aggiorna(i, { msg: m.startsWith("⚠️") ? m : `❌ ${m}`, ok: false });
@@ -129,13 +142,18 @@ export default function CaricaManuali() {
         onChange={(e) => setFiles(Array.from(e.target.files || []))}
       />
       <select className="campo-input" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-        <option value="manuale">Manuale</option>
-        <option value="bollettino">Bollettino tecnico</option>
-        <option value="schema">Schema elettrico/idraulico</option>
-        <option value="altro">Altro</option>
+        {TIPI.map((t) => (
+          <option key={t.id} value={t.id}>{t.nome}</option>
+        ))}
       </select>
-      <input className="campo-input" placeholder="Marca (es. Fendt, Trimble)" value={marca} onChange={(e) => setMarca(e.target.value)} />
-      <input className="campo-input" placeholder="Modelli (es. 700 Vario Gen6)" value={modelli} onChange={(e) => setModelli(e.target.value)} />
+      <select className="campo-input" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+        <option value="">Categoria: la propone l&apos;assistente</option>
+        {CATEGORIE.map((c) => (
+          <option key={c.id} value={c.id}>{c.icona} {c.nome}</option>
+        ))}
+      </select>
+      <input className="campo-input" placeholder="Marca (facoltativa, es. Fendt, Trimble)" value={marca} onChange={(e) => setMarca(e.target.value)} />
+      <input className="campo-input" placeholder="Modelli (facoltativi, es. 700 Vario Gen6)" value={modelli} onChange={(e) => setModelli(e.target.value)} />
       <input className="campo-input" placeholder="Link Google Drive (facoltativo)" value={link} onChange={(e) => setLink(e.target.value)} />
       <button className="bottone sm:col-span-2" disabled={lavoro || !files.length}>
         {lavoro ? "Sto lavorando…" : `Indicizza ${files.length || ""} PDF`}
