@@ -21,6 +21,9 @@ body {
 .campo-input {
   @apply w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/40 outline-none focus:border-sole;
 }
+/* tendine: su Windows l'elenco aperto ha fondo bianco, quindi le voci vanno colorate a parte */
+select.campo-input { color-scheme: dark; }
+select.campo-input option { background-color: var(--color-spazio-2); color: #fff; }
 .bottone {
   @apply inline-flex items-center justify-center gap-2 rounded-xl bg-sole px-5 py-3 font-semibold text-spazio active:scale-[.98] disabled:opacity-50;
 }
