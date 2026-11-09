@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CATEGORIE, TIPI } from "@/lib/categorie";
+import { CATEGORIE, TIPI, idElencoModelli } from "@/lib/categorie";
 
 type Stato = { nome: string; msg: string; ok?: boolean };
 type PdfJs = Awaited<ReturnType<typeof import("unpdf").getResolvedPDFJS>>;
@@ -152,8 +152,8 @@ export default function CaricaManuali() {
           <option key={c.id} value={c.id}>{c.icona} {c.nome}</option>
         ))}
       </select>
-      <input className="campo-input" placeholder="Marca (facoltativa, es. Fendt, Trimble)" value={marca} onChange={(e) => setMarca(e.target.value)} />
-      <input className="campo-input" placeholder="Modelli (facoltativi, es. 700 Vario Gen6)" value={modelli} onChange={(e) => setModelli(e.target.value)} />
+      <input className="campo-input" list="marche-note" placeholder="Marca (facoltativa, es. Fendt, Trimble)" value={marca} onChange={(e) => setMarca(e.target.value)} />
+      <input className="campo-input" list={idElencoModelli(marca)} placeholder="Modelli (facoltativi, es. 700 Vario Gen6)" value={modelli} onChange={(e) => setModelli(e.target.value)} />
       <input className="campo-input" placeholder="Link Google Drive (facoltativo)" value={link} onChange={(e) => setLink(e.target.value)} />
       <button className="bottone sm:col-span-2" disabled={lavoro || !files.length}>
         {lavoro ? "Sto lavorando…" : `Indicizza ${files.length || ""} PDF`}

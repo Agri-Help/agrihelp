@@ -14,8 +14,8 @@ export default async function Esperienza() {
         <form action={salvaEsperienza} className="mt-3 flex flex-col gap-2">
           <input name="titolo" className="campo-input" placeholder="Titolo (es. Segnale RTK che salta vicino ai pioppi)" required />
           <div className="grid grid-cols-2 gap-2">
-            <input name="marca" className="campo-input" placeholder="Marca (facoltativa)" />
-            <input name="modelli" className="campo-input" placeholder="Modelli (facoltativi)" />
+            <input name="marca" list="marche-note" className="campo-input" placeholder="Marca (facoltativa)" />
+            <input name="modelli" list="modelli-noti" className="campo-input" placeholder="Modelli (facoltativi)" />
           </div>
           <textarea name="testo" rows={5} className="campo-input" placeholder="Sintomo, causa, soluzione passo passo" required />
           <button className="bottone self-end">Salva</button>

@@ -88,8 +88,8 @@ export default async function SchedaCliente({ params, searchParams }: { params: 
               <option value="attrezzo">Attrezzo (seminatrice, spandiconcime…)</option>
               <option value="altro">Altro</option>
             </select>
-            <input name="marca" className="campo-input" placeholder="Marca" required />
-            <input name="modello" className="campo-input" placeholder="Modello" required />
+            <input name="marca" list="marche-note" className="campo-input" placeholder="Marca" required />
+            <input name="modello" list="modelli-noti" className="campo-input" placeholder="Modello" required />
             <input name="anno" type="number" className="campo-input" placeholder="Anno" />
             <input name="matricola" className="campo-input" placeholder="Matricola" />
             <input name="guida_satellitare" className="campo-input" placeholder="Guida satellitare / display" />

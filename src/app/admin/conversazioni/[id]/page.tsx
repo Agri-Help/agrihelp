@@ -90,8 +90,8 @@ export default async function Caso({ params, searchParams }: { params: Promise<{
           <input type="hidden" name="torna" value={`/admin/conversazioni/${id}`} />
           <input name="titolo" className="campo-input" placeholder="Titolo (es. Fendt 724: errore sterzo dopo cambio ruote)" defaultValue={c.titolo} required />
           <div className="grid grid-cols-2 gap-2">
-            <input name="marca" className="campo-input" placeholder="Marca" defaultValue={m?.marca || ""} />
-            <input name="modelli" className="campo-input" placeholder="Modelli" defaultValue={m?.modello || ""} />
+            <input name="marca" list="marche-note" className="campo-input" placeholder="Marca" defaultValue={m?.marca || ""} />
+            <input name="modelli" list="modelli-noti" className="campo-input" placeholder="Modelli" defaultValue={m?.modello || ""} />
           </div>
           <textarea name="testo" rows={5} className="campo-input" placeholder="Causa e soluzione, come la spiegheresti a un cliente." required />
           <button className="bottone self-end">Salva esperienza</button>

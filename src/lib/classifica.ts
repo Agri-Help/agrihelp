@@ -1,6 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { clienteAnthropic } from "./assistente";
-import { CATEGORIE, ID_CATEGORIE, ID_TIPI, TIPI, type Proposta } from "./categorie";
+import { CATEGORIE, ID_CATEGORIE, ID_TIPI, MODELLI_NOTI, TIPI, type Proposta } from "./categorie";
 import { supabaseAdmin } from "./supabase/server";
 
 const MODELLO = (process.env.CLAUDE_MODEL || "").trim() || "claude-opus-5-5";
@@ -51,7 +51,10 @@ export async function proponiClassificazione(documentoId: string): Promise<Propo
         role: "user",
         content:
           `Sei l'archivista di un tecnico di macchine agricole e guide satellitari. Classifica questo documento usando il titolo nella copertina e le prime pagine.\n` +
-          `Il nome del file può essere sbagliato o senza senso: fidati del testo. Il manuale di un sistema GPS, display, sterzo automatico o ISOBUS va in "guida" anche se è montato su un trattore. Seminatrici, irroratrici, presse, erpici e simili vanno in "attrezzature".\n\n` +
+          `Il nome del file può essere sbagliato o senza senso: fidati del testo. Il manuale di un sistema GPS, display, sterzo automatico o ISOBUS va in "guida" anche se è montato su un trattore. Seminatrici, irroratrici, presse, erpici e simili vanno in "attrezzature".\n` +
+          `Modelli venduti dal tecnico (se il documento riguarda uno di questi, scrivi marca e modello esattamente così; se vale per più modelli separali con una virgola):\n` +
+          Object.entries(MODELLI_NOTI).map(([m, l]) => `${m}: ${l.join(", ")}`).join("\n") +
+          `\n\n` +
           `Nome del file: ${doc.titolo}\nPagine: ${doc.pagine}\nDati già inseriti: tipo=${doc.tipo}, marca=${doc.marca || "-"}, modelli=${doc.modelli || "-"}\n\n` +
           (testo || "(nessun testo leggibile nelle prime pagine)"),
       },
