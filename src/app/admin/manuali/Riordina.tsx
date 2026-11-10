@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIE, TIPI, idElencoModelli, iconaCategoria, nomeCategoria, nomeTipo, type Proposta } from "@/lib/categorie";
 import { eliminaDocumento } from "../azioni";
-import { apriPdf, caricaPdfJs, immaginePagina, salvaImmagine, segnaConImmagini } from "@/lib/pdfBrowser";
+import { apriPdf, caricaPdfJs, riassuntoImmagini, salvaTutteLeImmagini } from "@/lib/pdfBrowser";
 
 export type Doc = {
   id: string;
@@ -38,14 +38,10 @@ function AggiungiImmagini({ d }: { d: Doc }) {
         setLavoro(false);
         return;
       }
-      for (let n = 1; n <= pdf.numPages; n++) {
-        if (n % 5 === 1) setStato(`Salvo le immagini: pagina ${n} di ${pdf.numPages}…`);
-        await salvaImmagine(d.id, n, await immaginePagina(pdf, n));
-      }
+      const r = await salvaTutteLeImmagini(pdf, d.id, setStato);
       await pdf.cleanup();
-      await segnaConImmagini(d.id);
-      setStato("✅ Immagini salvate");
-      router.refresh();
+      setStato(riassuntoImmagini(r));
+      if (r.salvate) router.refresh();
     } catch (err) {
       setStato(`❌ ${err instanceof Error ? err.message : "errore"}`);
     }
