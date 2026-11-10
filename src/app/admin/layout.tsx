@@ -2,6 +2,7 @@ import Link from "next/link";
 import { richiediAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { Logo } from "@/components/Scena";
+import ElenchiNoti from "@/components/ElenchiNoti";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,7 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
         </nav>
       </header>
       <div className="px-4 py-5">{children}</div>
+      <ElenchiNoti />
     </div>
   );
 }

@@ -39,3 +39,33 @@ export type Proposta = {
   modelli: string;
   tipo: string;
 };
+
+/** Modelli già venduti, per marca: compaiono come suggerimenti nei campi Marca e Modello. */
+export const MODELLI_NOTI: Record<string, string[]> = {
+  McCormick: [
+    "X2.055",
+    "X4.080",
+    "X5.100 Cruise",
+    "X5.100 Cruise Plus",
+    "X5.120 Efficient",
+    "X5.120 Premium",
+    "X6.135",
+    "X6.414 P6-Drive",
+    "X6.415 P6-Drive",
+    "X7.418 P6-Drive",
+    "X7.418 VT-Drive",
+    "X7.618 P6-Drive",
+    "X7.623 P6-Drive",
+    "X7.624 VT-Drive",
+    "X8.631 VT-Drive",
+    "CX80",
+  ],
+};
+
+export const MARCHE_NOTE = Object.keys(MODELLI_NOTI);
+
+/** Id del suggerimento modelli da usare con <input list=…>: quelli della marca se nota, altrimenti tutti. */
+export function idElencoModelli(marca: string | null | undefined): string {
+  const m = MARCHE_NOTE.find((x) => x.toLowerCase() === (marca || "").trim().toLowerCase());
+  return m ? `modelli-${m.toLowerCase().replace(/[^a-z0-9]+/g, "-")}` : "modelli-noti";
+}

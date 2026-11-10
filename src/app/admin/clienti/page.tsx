@@ -26,8 +26,8 @@ export default async function Clienti({ searchParams }: { searchParams: Promise<
           <input name="gettoni" type="number" min={0} className="campo-input" defaultValue={100} placeholder="Gettoni iniziali" />
           <input name="motivo_gettoni" className="campo-input sm:col-span-2" placeholder="Motivo gettoni (es. Vendita Fendt 724 - fattura 123)" defaultValue="Regalo alla vendita del trattore" />
           <div className="pt-2 text-sm font-semibold text-white/70 sm:col-span-2">Prima macchina (facoltativa)</div>
-          <input name="marca" className="campo-input" placeholder="Marca (es. Fendt)" />
-          <input name="modello" className="campo-input" placeholder="Modello (es. 724 Vario)" />
+          <input name="marca" list="marche-note" className="campo-input" placeholder="Marca (es. Fendt)" />
+          <input name="modello" list="modelli-noti" className="campo-input" placeholder="Modello (es. 724 Vario)" />
           <input name="anno" type="number" className="campo-input" placeholder="Anno" />
           <input name="matricola" className="campo-input" placeholder="Matricola / telaio" />
           <input name="guida_satellitare" className="campo-input sm:col-span-2" placeholder="Guida satellitare (es. Trimble GFX-750 + NAV-900, RTK)" />

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CATEGORIE, TIPI, iconaCategoria, nomeCategoria, nomeTipo, type Proposta } from "@/lib/categorie";
+import { CATEGORIE, TIPI, idElencoModelli, iconaCategoria, nomeCategoria, nomeTipo, type Proposta } from "@/lib/categorie";
 import { eliminaDocumento } from "../azioni";
 
 export type Doc = {
@@ -119,8 +119,8 @@ export function SchedaDocumento({ d, inModifica = false }: { d: Doc; inModifica?
             <option key={t.id} value={t.id}>{t.nome}</option>
           ))}
         </select>
-        <input className="campo-input" value={v.marca} onChange={cambia("marca")} placeholder="Marca" />
-        <input className="campo-input" value={v.modelli} onChange={cambia("modelli")} placeholder="Modello" />
+        <input className="campo-input" list="marche-note" value={v.marca} onChange={cambia("marca")} placeholder="Marca" />
+        <input className="campo-input" list={idElencoModelli(v.marca)} value={v.modelli} onChange={cambia("modelli")} placeholder="Modello" />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <button className="bottone" disabled={lavoro || !v.titolo.trim()} onClick={conferma}>
