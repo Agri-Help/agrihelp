@@ -12,6 +12,8 @@ type Corpo =
   | { azione: "crea"; titolo: string; tipo: string; categoria?: string; marca?: string; modelli?: string; link_drive?: string; pagine: number }
   | { azione: "pagine"; documento_id: string; pagine: { pagina: number; testo: string }[] }
   | { azione: "proponi"; documento_id: string }
+  | { azione: "immagine"; documento_id: string; pagina: number; dati: string }
+  | { azione: "con_immagini"; documento_id: string }
   | { azione: "conferma"; documento_id: string; titolo: string; categoria: string; marca?: string; modelli?: string; tipo: string };
 
 /** Riceve il testo dei manuali (estratto nel browser) pagina per pagina. */
@@ -50,6 +52,28 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ ok: true, salvate: righe.length });
   }
+  if (corpo.azione === "immagine") {
+    const pagina = Math.floor(Number(corpo.pagina));
+    const dati = Buffer.from(String(corpo.dati || ""), "base64");
+    if (!/^[0-9a-f-]{36}$/i.test(corpo.documento_id) || !(pagina > 0) || !dati.length || dati.length > 3_000_000) {
+      return NextResponse.json({ errore: "Immagine non valida" }, { status: 400 });
+    }
+    const { error } = await sb.storage
+      .from("foto")
+      .upload(`manuali/${corpo.documento_id}/${pagina}.jpg`, dati, { contentType: "image/jpeg", upsert: true });
+    if (error) return NextResponse.json({ errore: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (corpo.azione === "con_immagini") {
+    const { error } = await sb.from("documenti").update({ immagini: true }).eq("id", corpo.documento_id);
+    if (error) {
+      const m = /immagini/.test(error.message) ? "manca l'aggiornamento del database (file 0003_immagini_manuali.sql)" : error.message;
+      return NextResponse.json({ errore: m }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   if (corpo.azione === "proponi") {
     try {
       const proposta = await proponiClassificazione(corpo.documento_id);

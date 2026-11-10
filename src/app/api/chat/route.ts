@@ -106,7 +106,7 @@ export async function POST(req: Request) {
 
   const { data: msg } = await sb
     .from("messaggi")
-    .insert({ conversazione_id: conversazioneId, ruolo: "assistente", testo: risposta.testo, fonti: risposta.fonti })
+    .insert({ conversazione_id: conversazioneId, ruolo: "assistente", testo: risposta.testo, fonti: risposta.fonti, foto: risposta.immagini })
     .select("*")
     .single();
 

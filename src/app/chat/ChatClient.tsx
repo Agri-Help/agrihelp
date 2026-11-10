@@ -470,7 +470,7 @@ function Bolla({ m, parla, onLeggi }: { m: Messaggio; parla: boolean; onLeggi: (
         }`}
       >
         {tecnico && <div className="mb-1 text-xs font-semibold text-sole">Il tecnico</div>}
-        {m.fotoUrl && m.fotoUrl.length > 0 && (
+        {m.fotoUrl && m.fotoUrl.length > 0 && m.ruolo !== "assistente" && (
           <div className="mb-2 flex flex-wrap gap-2">
             {m.fotoUrl.map((u, i) => (
               <a key={i} href={u} target="_blank" rel="noreferrer">
@@ -481,6 +481,20 @@ function Bolla({ m, parla, onLeggi }: { m: Messaggio; parla: boolean; onLeggi: (
           </div>
         )}
         {m.testo && (mio ? <p className="whitespace-pre-wrap">{m.testo}</p> : <TestoAI testo={m.testo} />)}
+        {m.ruolo === "assistente" && m.fotoUrl && m.fotoUrl.length > 0 && (
+          <div className="mt-3 flex flex-col gap-2">
+            {m.fotoUrl.map((u, i) => {
+              const pag = (m.foto?.[i] || "").match(/\/(\d+)\.jpg$/)?.[1];
+              return (
+                <a key={i} href={u} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt={pag ? `Pagina ${pag} del manuale` : "Pagina del manuale"} className="w-full" loading="lazy" />
+                  {pag && <div className="bg-black/70 px-2 py-1 text-[11px] text-white/80">📖 pag. {pag} · tocca per ingrandire</div>}
+                </a>
+              );
+            })}
+          </div>
+        )}
         {m.ruolo === "assistente" && (
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {m.fonti?.slice(0, 4).map((f, i) =>

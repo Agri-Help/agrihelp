@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIE, TIPI, idElencoModelli, iconaCategoria, nomeCategoria, nomeTipo, type Proposta } from "@/lib/categorie";
 import { eliminaDocumento } from "../azioni";
+import { apriPdf, caricaPdfJs, immaginePagina, salvaImmagine, segnaConImmagini } from "@/lib/pdfBrowser";
 
 export type Doc = {
   id: string;
@@ -15,7 +16,53 @@ export type Doc = {
   link_drive: string | null;
   proposta: Proposta | null;
   confermato: boolean;
+  immagini?: boolean;
 };
+
+/** Aggiunge le immagini delle pagine a un manuale già caricato, rileggendo lo stesso PDF. */
+function AggiungiImmagini({ d }: { d: Doc }) {
+  const router = useRouter();
+  const [stato, setStato] = useState("");
+  const [lavoro, setLavoro] = useState(false);
+
+  async function scelto(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setLavoro(true);
+    try {
+      setStato("Apro il PDF…");
+      const pdf = await apriPdf(await caricaPdfJs(), f);
+      if (pdf.numPages !== d.pagine && !confirm(`Questo PDF ha ${pdf.numPages} pagine, quello caricato ne ha ${d.pagine}. È davvero lo stesso manuale?`)) {
+        setStato("");
+        setLavoro(false);
+        return;
+      }
+      for (let n = 1; n <= pdf.numPages; n++) {
+        if (n % 5 === 1) setStato(`Salvo le immagini: pagina ${n} di ${pdf.numPages}…`);
+        await salvaImmagine(d.id, n, await immaginePagina(pdf, n));
+      }
+      await pdf.cleanup();
+      await segnaConImmagini(d.id);
+      setStato("✅ Immagini salvate");
+      router.refresh();
+    } catch (err) {
+      setStato(`❌ ${err instanceof Error ? err.message : "errore"}`);
+    }
+    setLavoro(false);
+  }
+
+  if (d.immagini) return <span className="text-sm text-white/50">🖼️ con immagini</span>;
+  return (
+    <span className="text-sm">
+      <label className={`underline ${lavoro ? "text-white/40" : "cursor-pointer text-white/70"}`}>
+        🖼️ Aggiungi immagini
+        <input type="file" accept="application/pdf" className="hidden" disabled={lavoro} onChange={scelto} />
+      </label>
+      {stato && <span className="ml-2 text-white/60">{stato}</span>}
+    </span>
+  );
+}
 
 async function chiama(corpo: object) {
   const r = await fetch("/api/admin/manuali", {
@@ -93,9 +140,12 @@ export function SchedaDocumento({ d, inModifica = false }: { d: Doc; inModifica?
             )}
           </div>
         </div>
-        <button className="text-sm text-white/70 underline" onClick={() => setAperta(true)}>
-          Modifica
-        </button>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <button className="text-sm text-white/70 underline" onClick={() => setAperta(true)}>
+            Modifica
+          </button>
+          <AggiungiImmagini d={d} />
+        </div>
       </div>
     );
   }

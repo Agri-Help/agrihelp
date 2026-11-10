@@ -50,6 +50,7 @@ USA I MANUALI E L'ESPERIENZA
 - Non dire mai che un'informazione "non c'è" se non hai prima cercato dentro il documento giusto con leggi_documento.
 - Per i CODICI ERRORE (es. SPN 204 FMI 14, E-0123, 523312.04, DTC P0101) usa prima cerca_codice, passando più scritture dello stesso codice, perché i manuali li scrivono in modi diversi: per SPN 204 FMI 14 prova per esempio "SPN 204", "204-14", "204.14", "204 14", "000204". Poi, se serve, cerca_manuali con il nome del componente.
 - Se trovi l'informazione, citala così: (📖 Titolo del documento, pag. N). Riporta al massimo una o due frasi brevi del manuale: non copiare mai pagine intere.
+- IMMAGINI: i documenti segnati "con immagini" hanno le pagine anche come immagine. Quando il disegno aiuta (procedura di smontaggio o sostituzione, posizione di un filtro, di un fusibile o di un connettore, schema, tabella, schermata del display) o l'utente chiede di vedere, usa mostra_pagine con le pagine giuste (al massimo 3), dopo aver trovato con leggi_documento o cerca_manuali quali sono. Le immagini compaiono sotto la tua risposta: guardale, spiega cosa mostrano e richiama i numeri o le lettere del disegno. Non mostrare mai capitoli interi né pagine non utili alla domanda.
 - Le note "esperienza" sono soluzioni reali di ${NOME_TECNICO}: hanno la precedenza sul manuale generico.
 - Se non trovi nulla, dillo con onestà e ragiona dall'esperienza generale, senza inventare codici, valori, coppie di serraggio o procedure.
 
@@ -114,6 +115,20 @@ const STRUMENTI: Anthropic.Beta.BetaTool[] = [
     },
   },
   {
+    name: "mostra_pagine",
+    description:
+      "Mostra all'utente, sotto la risposta, l'immagine di al massimo 3 pagine di un documento segnato 'con immagini' (disegni, procedure, schemi). Restituisce anche le immagini a te, così puoi descriverle.",
+    input_schema: {
+      type: "object",
+      properties: {
+        documento: { type: "string", description: "Titolo del documento, come nell'elenco" },
+        pagine: { type: "array", items: { type: "integer" }, description: "Numeri di pagina da mostrare (massimo 3)" },
+      },
+      required: ["documento", "pagine"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "passa_al_tecnico",
     description:
       "Passa il caso al tecnico umano, che riceverà un avviso e ricontatterà il cliente. Da usare per casi difficili, urgenti, che richiedono un intervento o su richiesta del cliente.",
@@ -131,7 +146,7 @@ const STRUMENTI: Anthropic.Beta.BetaTool[] = [
   },
 ];
 
-type RisultatoAssistente = { testo: string; fonti: Fonte[]; passataAlTecnico: boolean };
+type RisultatoAssistente = { testo: string; fonti: Fonte[]; passataAlTecnico: boolean; immagini: string[] };
 
 function descriviCliente(p: Profilo, macchine: Macchina[], macchinaScelta: Macchina | null) {
   const righe = [
@@ -244,6 +259,7 @@ type Documento = {
   modelli: string | null;
   pagine: number;
   link_drive: string | null;
+  immagini?: boolean;
 };
 
 async function elencoDocumenti(): Promise<Documento[]> {
@@ -255,7 +271,7 @@ async function elencoDocumenti(): Promise<Documento[]> {
 function descriviDocumenti(docs: Documento[]): string {
   if (!docs.length) return "DOCUMENTI DISPONIBILI: nessuno caricato per ora.";
   const riga = (d: Documento) =>
-    `- ${d.titolo} [${nomeTipo(d.tipo)}${d.marca ? `, ${d.marca}` : ""}${d.modelli ? `, ${d.modelli}` : ""}, ${d.pagine} pag.]`;
+    `- ${d.titolo} [${nomeTipo(d.tipo)}${d.marca ? `, ${d.marca}` : ""}${d.modelli ? `, ${d.modelli}` : ""}, ${d.pagine} pag.${d.immagini ? ", con immagini" : ""}]`;
   const gruppi = [...CATEGORIE.map((c) => c.id as string), ""]
     .map((id) => ({ id, docs: docs.filter((d) => (d.categoria || "") === id) }))
     .filter((g) => g.docs.length);
@@ -263,6 +279,32 @@ function descriviDocumenti(docs: Documento[]): string {
     "DOCUMENTI DISPONIBILI per categoria (usa il titolo con leggi_documento; scegli prima quelli della marca e del modello della macchina del cliente):\n" +
     gruppi.map((g) => `${g.id ? nomeCategoria(g.id).toUpperCase() : "SENZA CATEGORIA"}\n${g.docs.map(riga).join("\n")}`).join("\n\n")
   );
+}
+
+/** Prepara le immagini di alcune pagine: percorsi da mostrare all'utente e blocchi immagine per l'assistente. */
+async function mostraPagine(docs: Documento[], input: Record<string, unknown>) {
+  const doc = trovaDocumento(docs, String(input.documento || ""));
+  const vuoto = { percorsi: [] as string[], fonti: [] as Fonte[] };
+  if (!doc) return { ...vuoto, contenuto: "Documento non trovato." as string | Anthropic.Beta.BetaToolResultBlockParam["content"] };
+  if (!doc.immagini) return { ...vuoto, contenuto: `Il documento "${doc.titolo}" non ha le immagini delle pagine: descrivi a parole.` };
+  const pagine = Array.from(new Set((Array.isArray(input.pagine) ? input.pagine : []).map((x) => Math.floor(Number(x)))))
+    .filter((n) => n >= 1 && n <= doc.pagine)
+    .slice(0, 3);
+  if (!pagine.length) return { ...vuoto, contenuto: `Indica numeri di pagina tra 1 e ${doc.pagine}.` };
+  const sb = supabaseAdmin();
+  const percorsi: string[] = [];
+  const blocchi: Anthropic.Beta.BetaToolResultBlockParam["content"] = [];
+  for (const n of pagine) {
+    const percorso = `manuali/${doc.id}/${n}.jpg`;
+    const { data } = await sb.storage.from("foto").download(percorso);
+    if (!data) continue;
+    percorsi.push(percorso);
+    blocchi.push({ type: "text", text: `${doc.titolo}, pag. ${n}:` });
+    blocchi.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: Buffer.from(await data.arrayBuffer()).toString("base64") } });
+  }
+  if (!percorsi.length) return { ...vuoto, contenuto: "Immagini di queste pagine non disponibili: descrivi a parole." };
+  blocchi.push({ type: "text", text: "Queste pagine verranno mostrate all'utente sotto la tua risposta." });
+  return { percorsi, fonti: pagine.map((n) => ({ fonte: "manuale" as const, titolo: doc.titolo, pagina: n, link_drive: doc.link_drive })), contenuto: blocchi };
 }
 
 /** Trova il documento giusto dal titolo (anche parziale, senza badare a maiuscole e simboli). */
@@ -359,7 +401,8 @@ async function costruisciCronologia(messaggi: Messaggio[]): Promise<Anthropic.Be
   for (const m of messaggi) {
     if (m.ruolo === "sistema") continue;
     if (m.ruolo === "assistente") {
-      out.push({ role: "assistant", content: m.testo || "…" });
+      const mostrate = (m.foto || []).length ? `\n[Avevi mostrato le immagini di ${(m.foto || []).length} pagine del manuale]` : "";
+      out.push({ role: "assistant", content: (m.testo || "…") + mostrate });
       continue;
     }
     const blocchi: Anthropic.Beta.BetaContentBlockParam[] = [];
@@ -399,6 +442,7 @@ export async function rispondi(params: {
   const cronologia = await costruisciCronologia(params.messaggi);
   const fonti: Fonte[] = [];
   let passataAlTecnico = false;
+  const immagini: string[] = [];
 
   const documenti = await elencoDocumenti();
   const system: Anthropic.Beta.BetaTextBlockParam[] = [
@@ -432,6 +476,7 @@ export async function rispondi(params: {
         testo: "Su questa richiesta non posso aiutarti. Se vuoi, premi «Passa al tecnico» e ti ricontatta lui.",
         fonti,
         passataAlTecnico,
+        immagini: [],
       };
     }
 
@@ -442,7 +487,7 @@ export async function rispondi(params: {
         .map((b) => b.text)
         .join("\n")
         .trim();
-      return { testo: testo || "Scusa, non ho capito bene. Puoi ripetere?", fonti: unicheFonti(fonti), passataAlTecnico };
+      return { testo: testo || "Scusa, non ho capito bene. Puoi ripetere?", fonti: unicheFonti(fonti), passataAlTecnico, immagini: immagini.slice(0, 3) };
     }
 
     const risultati: Anthropic.Beta.BetaToolResultBlockParam[] = [];
@@ -461,6 +506,11 @@ export async function rispondi(params: {
         const r = await cercaManuali(String(input.parole_chiave || ""), (input.marca as string) || null);
         fonti.push(...r.fonti);
         risultati.push({ type: "tool_result", tool_use_id: c.id, content: r.testo });
+      } else if (c.name === "mostra_pagine") {
+        const r = await mostraPagine(documenti, input);
+        immagini.push(...r.percorsi.filter((p) => !immagini.includes(p)));
+        fonti.push(...r.fonti);
+        risultati.push({ type: "tool_result", tool_use_id: c.id, content: r.contenuto });
       } else if (c.name === "passa_al_tecnico") {
         await passaAlTecnico(params.conversazioneId, String(input.motivo || ""), String(input.riepilogo || ""), Boolean(input.urgente), params.profilo);
         passataAlTecnico = true;
@@ -471,7 +521,7 @@ export async function rispondi(params: {
     }
     cronologia.push({ role: "user", content: risultati });
   }
-  return { testo: "Ci sto mettendo troppo. Ti passo al tecnico che ti ricontatterà.", fonti: unicheFonti(fonti), passataAlTecnico };
+  return { testo: "Ci sto mettendo troppo. Ti passo al tecnico che ti ricontatterà.", fonti: unicheFonti(fonti), passataAlTecnico, immagini: immagini.slice(0, 3) };
 }
 
 function unicheFonti(fonti: Fonte[]) {
