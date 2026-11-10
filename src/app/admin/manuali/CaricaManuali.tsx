@@ -2,30 +2,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIE, TIPI, idElencoModelli } from "@/lib/categorie";
+import { apriPdf, caricaPdfJs, immaginePagina, salvaImmagine, segnaConImmagini } from "@/lib/pdfBrowser";
 
 type Stato = { nome: string; msg: string; ok?: boolean };
-type PdfJs = Awaited<ReturnType<typeof import("unpdf").getResolvedPDFJS>>;
-
-/**
- * Apre il PDF leggendo il file a pezzi (1 MB alla volta) invece di caricarlo tutto in memoria:
- * così funzionano anche manuali da centinaia di MB.
- */
-async function apriPdf(pdfjs: PdfJs, f: File) {
-  const iniziale = new Uint8Array(await f.slice(0, Math.min(f.size, 1 << 20)).arrayBuffer());
-  const trasporto = new pdfjs.PDFDataRangeTransport(f.size, iniziale);
-  trasporto.requestDataRange = (inizio: number, fine: number) => {
-    f.slice(inizio, fine)
-      .arrayBuffer()
-      .then((b) => trasporto.onDataRange(inizio, new Uint8Array(b)));
-  };
-  return pdfjs.getDocument({
-    range: trasporto,
-    rangeChunkSize: 1 << 20,
-    disableAutoFetch: true,
-    disableStream: true,
-  }).promise;
-}
-
 export default function CaricaManuali() {
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
@@ -34,6 +13,7 @@ export default function CaricaManuali() {
   const [marca, setMarca] = useState("");
   const [modelli, setModelli] = useState("");
   const [link, setLink] = useState("");
+  const [conImmagini, setConImmagini] = useState(false);
   const [stati, setStati] = useState<Stato[]>([]);
   const [lavoro, setLavoro] = useState(false);
 
@@ -44,8 +24,7 @@ export default function CaricaManuali() {
     if (!files.length) return;
     setLavoro(true);
     setStati(files.map((f) => ({ nome: f.name, msg: "In attesa" })));
-    const { getResolvedPDFJS } = await import("unpdf");
-    const pdfjs = await getResolvedPDFJS();
+    const pdfjs = await caricaPdfJs();
 
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
@@ -110,6 +89,13 @@ export default function CaricaManuali() {
           }
         }
         await salva();
+        if (conImmagini && id) {
+          for (let n = 1; n <= totale; n++) {
+            if (n % 5 === 1) aggiorna(i, { msg: `Salvo le immagini: pagina ${n} di ${totale}…` });
+            await salvaImmagine(id, n, await immaginePagina(pdf, n));
+          }
+          await segnaConImmagini(id);
+        }
         await pdf.cleanup();
         aggiorna(i, { msg: `✅ Fatto (${totale} pagine). Preparo la proposta di nome e categoria…`, ok: true });
         const p = await fetch("/api/admin/manuali", {
@@ -155,6 +141,16 @@ export default function CaricaManuali() {
       <input className="campo-input" list="marche-note" placeholder="Marca (facoltativa, es. Fendt, Trimble)" value={marca} onChange={(e) => setMarca(e.target.value)} />
       <input className="campo-input" list={idElencoModelli(marca)} placeholder="Modelli (facoltativi, es. 700 Vario Gen6)" value={modelli} onChange={(e) => setModelli(e.target.value)} />
       <input className="campo-input" placeholder="Link Google Drive (facoltativo)" value={link} onChange={(e) => setLink(e.target.value)} />
+      <fieldset className="flex flex-col gap-1 text-sm sm:col-span-2">
+        <label className="flex items-center gap-2">
+          <input type="radio" name="contenuto" checked={!conImmagini} onChange={() => setConImmagini(false)} />
+          Solo testo (veloce, occupa poco spazio)
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="radio" name="contenuto" checked={conImmagini} onChange={() => setConImmagini(true)} />
+          Testo e immagini delle pagine (l&apos;assistente può mostrare disegni e procedure; più lento)
+        </label>
+      </fieldset>
       <button className="bottone sm:col-span-2" disabled={lavoro || !files.length}>
         {lavoro ? "Sto lavorando…" : `Indicizza ${files.length || ""} PDF`}
       </button>

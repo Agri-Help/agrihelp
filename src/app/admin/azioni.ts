@@ -185,7 +185,15 @@ export async function eliminaEsperienza(f: FormData) {
 
 export async function eliminaDocumento(f: FormData) {
   await richiediAdmin();
-  await supabaseAdmin().from("documenti").delete().eq("id", s(f, "id"));
+  const id = s(f, "id");
+  const sb = supabaseAdmin();
+  // cancella anche le immagini delle pagine, se ci sono
+  for (let giro = 0; giro < 20; giro++) {
+    const { data } = await sb.storage.from("foto").list(`manuali/${id}`, { limit: 1000 });
+    if (!data?.length) break;
+    await sb.storage.from("foto").remove(data.map((x) => `manuali/${id}/${x.name}`));
+  }
+  await sb.from("documenti").delete().eq("id", id);
   revalidatePath("/admin/manuali");
 }
 

@@ -104,6 +104,15 @@ I PDF scansionati (solo immagini) vengono saltati perché non hanno testo; per q
 
 Ogni proposta è una piccola domanda all'assistente: costa pochi centesimi per manuale.
 
+## 8. Aggiornamento: immagini dei manuali (novembre 2026)
+
+1. In Supabase apri **SQL Editor → New query**, incolla tutto il file `supabase/migrations/0003_immagini_manuali.sql` e premi **Run**.
+2. Quando carichi un manuale scegli **Testo e immagini delle pagine**: l'app salva anche una foto di ogni pagina (circa 60-150 KB a pagina).
+3. Per un manuale già caricato, nella pagina Manuali premi **🖼️ Aggiungi immagini** e scegli di nuovo lo stesso PDF.
+4. In chat l'assistente mostra al massimo 3 pagine per risposta, solo quelle utili (procedure, disegni, schemi).
+
+Spazio: il piano gratuito di Supabase ha 1 GB per i file, cioè circa 30-40 manuali da 300 pagine con immagini.
+
 ## Come funziona, in breve
 
 - **Gettoni**: ogni domanda del cliente scala 1 gettone. Se l'assistente va in errore il gettone viene restituito. "Passa al tecnico" non costa gettoni. Lo storico movimenti per cliente è nella sua scheda (utile per le fatture).

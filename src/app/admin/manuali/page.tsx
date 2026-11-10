@@ -12,6 +12,7 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
   );
   // il database non ha ancora le colonne nuove: va eseguito il file 0002
   const manca0002 = !error && data && data.length > 0 && !("confermato" in data[0]);
+  const manca0003 = !error && data && data.length > 0 && !("immagini" in data[0]);
 
   const daRiordinare = manca0002 ? [] : tutti.filter((d) => !d.confermato);
   const sistemati = manca0002 ? tutti : tutti.filter((d) => d.confermato);
@@ -57,6 +58,16 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
           <p className="mt-1 text-sm text-white/70">
             Per usare le categorie apri Supabase → SQL Editor → New query, incolla tutto il file{" "}
             <b>supabase/migrations/0002_categorie_manuali.sql</b> e premi Run. Non cancella nessun dato.
+          </p>
+        </div>
+      )}
+
+      {manca0003 && (
+        <div className="scheda border border-sole/40">
+          <h2 className="font-semibold">⚠️ Per le immagini dei manuali serve un aggiornamento del database</h2>
+          <p className="mt-1 text-sm text-white/70">
+            Apri Supabase → SQL Editor → New query, incolla tutto il file <b>supabase/migrations/0003_immagini_manuali.sql</b> e premi Run.
+            Non cancella nessun dato.
           </p>
         </div>
       )}
