@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIE, TIPI, idElencoModelli } from "@/lib/categorie";
-import { apriPdf, caricaPdfJs, immaginePagina, salvaImmagine, segnaConImmagini } from "@/lib/pdfBrowser";
+import { apriPdf, caricaPdfJs, riassuntoImmagini, salvaTutteLeImmagini } from "@/lib/pdfBrowser";
 
 type Stato = { nome: string; msg: string; ok?: boolean };
 export default function CaricaManuali() {
@@ -89,12 +89,10 @@ export default function CaricaManuali() {
           }
         }
         await salva();
+        let notaImmagini = "";
         if (conImmagini && id) {
-          for (let n = 1; n <= totale; n++) {
-            if (n % 5 === 1) aggiorna(i, { msg: `Salvo le immagini: pagina ${n} di ${totale}…` });
-            await salvaImmagine(id, n, await immaginePagina(pdf, n));
-          }
-          await segnaConImmagini(id);
+          const r = await salvaTutteLeImmagini(pdf, id, (msg) => aggiorna(i, { msg }));
+          notaImmagini = ` ${riassuntoImmagini(r)}.`;
         }
         await pdf.cleanup();
         aggiorna(i, { msg: `✅ Fatto (${totale} pagine). Preparo la proposta di nome e categoria…`, ok: true });
@@ -105,8 +103,8 @@ export default function CaricaManuali() {
         }).catch(() => null);
         aggiorna(i, {
           msg: p?.ok
-            ? `✅ Fatto (${totale} pagine). Controlla la proposta qui sotto e conferma.`
-            : `✅ Fatto (${totale} pagine). Proposta automatica non riuscita: puoi riprovarla qui sotto.`,
+            ? `✅ Fatto (${totale} pagine).${notaImmagini} Controlla la proposta qui sotto e conferma.`
+            : `✅ Fatto (${totale} pagine).${notaImmagini} Proposta automatica non riuscita: puoi riprovarla qui sotto.`,
         });
       } catch (err) {
         const m = err instanceof Error ? err.message : "Errore";
