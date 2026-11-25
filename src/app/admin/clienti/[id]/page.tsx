@@ -18,15 +18,15 @@ export default async function SchedaCliente({ params, searchParams }: { params: 
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/admin/clienti" className="text-sm text-white/60">← Clienti</Link>
-      {ok === "invitato" && <p className="rounded-lg bg-green-500/15 p-3 text-green-200">Invito inviato a {c.email}. Riceverà un&apos;email per entrare.</p>}
-      {ok === "reinviato" && <p className="rounded-lg bg-green-500/15 p-3 text-green-200">Invito inviato di nuovo.</p>}
-      {ok === "gia-registrato" && <p className="rounded-lg bg-white/10 p-3">Questo cliente è già registrato: può entrare da solo dalla pagina di accesso, scrivendo la sua email e il codice che riceve.</p>}
+      <Link href="/admin/clienti" className="text-sm text-slate-600">← Clienti</Link>
+      {ok === "invitato" && <p className="rounded-lg bg-green-50 border border-green-200 p-3 text-green-800">Invito inviato a {c.email}. Riceverà un&apos;email per entrare.</p>}
+      {ok === "reinviato" && <p className="rounded-lg bg-green-50 border border-green-200 p-3 text-green-800">Invito inviato di nuovo.</p>}
+      {ok === "gia-registrato" && <p className="rounded-lg bg-tenue p-3">Questo cliente è già registrato: può entrare da solo dalla pagina di accesso, scrivendo la sua email e il codice che riceve.</p>}
 
       <div className="scheda flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <div className="text-xl font-bold">{c.nome || c.email}</div>
-          <div className="text-sm text-white/60">{c.email}{c.telefono ? ` · ${c.telefono}` : ""}</div>
+          <div className="text-sm text-slate-600">{c.email}{c.telefono ? ` · ${c.telefono}` : ""}</div>
         </div>
         <div className="text-2xl font-bold">🎟️ {c.gettoni}</div>
       </div>
@@ -40,17 +40,17 @@ export default async function SchedaCliente({ params, searchParams }: { params: 
           <input name="motivo" className="campo-input flex-1" placeholder="Motivo (es. Ricarica - fattura 45/2026)" />
           <button className="bottone">Carica</button>
         </div>
-        <p className="text-xs text-white/50">Per togliere gettoni scrivi un numero negativo.</p>
+        <p className="text-xs text-slate-600">Per togliere gettoni scrivi un numero negativo.</p>
         {movimenti && movimenti.length > 0 && (
           <details className="mt-1">
-            <summary className="cursor-pointer text-sm text-white/70">Storico movimenti</summary>
+            <summary className="cursor-pointer text-sm text-slate-700">Storico movimenti</summary>
             <table className="mt-2 w-full text-sm">
               <tbody>
                 {movimenti.map((mv) => (
-                  <tr key={mv.id} className="border-t border-white/5">
-                    <td className="py-1 text-white/50">{new Date(mv.creato_il).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}</td>
-                    <td className={mv.quantita > 0 ? "text-green-300" : "text-white/70"}>{mv.quantita > 0 ? "+" : ""}{mv.quantita}</td>
-                    <td className="text-white/70">{mv.motivo}</td>
+                  <tr key={mv.id} className="border-t border-bordo">
+                    <td className="py-1 text-slate-600">{new Date(mv.creato_il).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}</td>
+                    <td className={mv.quantita > 0 ? "text-green-700" : "text-slate-700"}>{mv.quantita > 0 ? "+" : ""}{mv.quantita}</td>
+                    <td className="text-slate-700">{mv.motivo}</td>
                   </tr>
                 ))}
               </tbody>
@@ -63,22 +63,22 @@ export default async function SchedaCliente({ params, searchParams }: { params: 
       <div className="scheda flex flex-col gap-3">
         <div className="font-semibold">Macchine</div>
         {((macchine || []) as Macchina[]).map((m) => (
-          <div key={m.id} className="flex items-start gap-2 rounded-xl bg-white/5 p-3">
+          <div key={m.id} className="flex items-start gap-2 rounded-xl bg-tenue p-3">
             <div className="flex-1">
-              <div>🚜 {nomeMacchina(m)} <span className="text-xs text-white/50">({m.tipo})</span></div>
-              <div className="text-sm text-white/50">
+              <div>🚜 {nomeMacchina(m)} <span className="text-xs text-slate-600">({m.tipo})</span></div>
+              <div className="text-sm text-slate-600">
                 {[m.matricola && `matr. ${m.matricola}`, m.guida_satellitare, m.note].filter(Boolean).join(" · ")}
               </div>
             </div>
             <form action={eliminaMacchina}>
               <input type="hidden" name="id" value={m.id} />
               <input type="hidden" name="cliente_id" value={id} />
-              <button className="text-sm text-red-300">Elimina</button>
+              <button className="text-sm text-red-700">Elimina</button>
             </form>
           </div>
         ))}
         <details>
-          <summary className="cursor-pointer text-sm text-sole">+ Aggiungi macchina</summary>
+          <summary className="cursor-pointer text-sm text-petrolio">+ Aggiungi macchina</summary>
           <form action={aggiungiMacchina} className="mt-2 grid gap-2 sm:grid-cols-2">
             <input type="hidden" name="cliente_id" value={id} />
             <select name="tipo" className="campo-input" defaultValue="trattore">
@@ -102,11 +102,11 @@ export default async function SchedaCliente({ params, searchParams }: { params: 
       {/* Conversazioni */}
       <div className="scheda">
         <div className="mb-2 font-semibold">Richieste</div>
-        {(conv || []).length === 0 && <p className="text-sm text-white/50">Nessuna richiesta.</p>}
+        {(conv || []).length === 0 && <p className="text-sm text-slate-600">Nessuna richiesta.</p>}
         {(conv || []).map((x) => (
-          <Link key={x.id} href={`/admin/conversazioni/${x.id}`} className="flex gap-2 border-t border-white/5 py-2 text-sm">
+          <Link key={x.id} href={`/admin/conversazioni/${x.id}`} className="flex gap-2 border-t border-bordo py-2 text-sm">
             <span className="flex-1 truncate">{x.titolo}</span>
-            <span className="text-white/50">{x.stato === "al_tecnico" ? "🧑‍🔧" : x.stato === "risolta" ? "✅" : ""} {new Date(x.aggiornato_il).toLocaleDateString("it-IT")}</span>
+            <span className="text-slate-600">{x.stato === "al_tecnico" ? "🧑‍🔧" : x.stato === "risolta" ? "✅" : ""} {new Date(x.aggiornato_il).toLocaleDateString("it-IT")}</span>
           </Link>
         ))}
       </div>
@@ -132,7 +132,7 @@ export default async function SchedaCliente({ params, searchParams }: { params: 
         <form action={cambiaAccesso}>
           <input type="hidden" name="id" value={id} />
           <input type="hidden" name="attivo" value={c.attivo ? "false" : "true"} />
-          <button className={c.attivo ? "bottone-secondario border-red-400/50 text-red-200" : "bottone"}>
+          <button className={c.attivo ? "bottone-secondario border-red-300 text-red-700" : "bottone"}>
             {c.attivo ? "🚫 Blocca accesso" : "✅ Riattiva accesso"}
           </button>
         </form>

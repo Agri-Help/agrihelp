@@ -21,17 +21,17 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
   ];
   return (
     <div className="mx-auto min-h-dvh max-w-4xl">
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-spazio/95 px-4 pt-[max(.75rem,env(safe-area-inset-top))] backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-bordo bg-carta/95 px-4 pt-[max(.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-center gap-3 pb-2">
           <Logo size={30} />
           <div className="flex-1 font-semibold">AgriDiag · Pannello tecnico</div>
-          <Link href="/chat" className="text-sm text-white/60 underline">Prova la chat</Link>
+          <Link href="/chat" className="text-sm text-slate-600 underline">Prova la chat</Link>
         </div>
         <nav className="-mx-1 flex gap-1 overflow-x-auto pb-2">
           {voci.map((v) => (
-            <Link key={v.href} href={v.href} className="shrink-0 rounded-full bg-white/5 px-4 py-1.5 text-sm hover:bg-white/10">
+            <Link key={v.href} href={v.href} className="shrink-0 rounded-full bg-tenue px-4 py-1.5 text-sm hover:bg-tenue">
               {v.label}
-              {v.badge ? <span className="ml-2 rounded-full bg-sole px-2 text-xs font-bold text-spazio">{v.badge}</span> : null}
+              {v.badge ? <span className="ml-2 rounded-full bg-petrolio px-2 text-xs font-bold text-white">{v.badge}</span> : null}
             </Link>
           ))}
         </nav>

@@ -25,22 +25,22 @@ export default async function Caso({ params, searchParams }: { params: Promise<{
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/admin" className="text-sm text-white/60">← Casi</Link>
+      <Link href="/admin" className="text-sm text-slate-600">← Casi</Link>
       <div className="scheda">
         <div className="text-lg font-bold">{c.titolo}</div>
-        <div className="mt-1 text-white/80">
+        <div className="mt-1 text-navy">
           <Link className="underline" href={`/admin/clienti/${p.id}`}>{p.nome || p.email}</Link>
           {p.azienda ? ` · ${p.azienda}` : ""} · 🎟️ {p.gettoni}
         </div>
         {m && (
-          <div className="text-sm text-white/60">
+          <div className="text-sm text-slate-600">
             🚜 {m.marca} {m.modello}
             {m.anno ? ` (${m.anno})` : ""}
             {m.matricola ? ` · matr. ${m.matricola}` : ""}
             {m.guida_satellitare ? ` · ${m.guida_satellitare}` : ""}
           </div>
         )}
-        {c.motivo_tecnico && <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-sole/10 p-3 font-sans text-sm text-amber-100">{c.motivo_tecnico}</pre>}
+        {c.motivo_tecnico && <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-amber-50 p-3 font-sans text-sm text-amber-900 border border-amber-200">{c.motivo_tecnico}</pre>}
         <div className="mt-3 flex flex-wrap gap-2">
           {tel && <a className="bottone-secondario" href={`tel:${tel}`}>📞 Chiama</a>}
           {tel && <a className="bottone-secondario" href={`https://wa.me/${numeroWhatsApp(tel)}`} target="_blank" rel="noreferrer">💬 WhatsApp</a>}
@@ -54,9 +54,9 @@ export default async function Caso({ params, searchParams }: { params: Promise<{
 
       <div className="flex flex-col gap-3">
         {messaggi.map((x) => (
-          <div key={x.id} className={x.ruolo === "sistema" ? "text-center text-xs text-white/50" : `rounded-2xl p-3 ${x.ruolo === "cliente" ? "ml-8 bg-campo-scuro" : x.ruolo === "tecnico" ? "mr-8 border border-sole/40 bg-sole/10" : "mr-8 bg-spazio-2"}`}>
+          <div key={x.id} className={x.ruolo === "sistema" ? "text-center text-xs text-slate-600" : `rounded-2xl p-3 ${x.ruolo === "cliente" ? "ml-8 border border-navy/15 bg-navy/5" : x.ruolo === "tecnico" ? "mr-8 border border-petrolio/40 bg-petrolio/5" : "mr-8 border border-bordo bg-carta"}`}>
             {x.ruolo !== "sistema" && (
-              <div className="mb-1 text-xs text-white/50">
+              <div className="mb-1 text-xs text-slate-600">
                 {x.ruolo === "cliente" ? "Cliente" : x.ruolo === "tecnico" ? "Tu" : "Assistente AI"} · {new Date(x.creato_il).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}
               </div>
             )}
@@ -71,7 +71,7 @@ export default async function Caso({ params, searchParams }: { params: Promise<{
               </div>
             ) : null}
             {x.ruolo === "assistente" ? <TestoAI testo={x.testo} /> : <p className="whitespace-pre-wrap">{x.testo}</p>}
-            {x.fonti?.length ? <div className="mt-2 text-xs text-white/50">Fonti: {x.fonti.map((f) => f.fonte === "esperienza" ? `Esperienza: ${f.titolo}` : `${f.titolo} p.${f.pagina}`).join(" · ")}</div> : null}
+            {x.fonti?.length ? <div className="mt-2 text-xs text-slate-600">Fonti: {x.fonti.map((f) => f.fonte === "esperienza" ? `Esperienza: ${f.titolo}` : `${f.titolo} p.${f.pagina}`).join(" · ")}</div> : null}
           </div>
         ))}
       </div>
@@ -85,7 +85,7 @@ export default async function Caso({ params, searchParams }: { params: Promise<{
 
       <details className="scheda" open={ok === "esperienza" ? false : undefined}>
         <summary className="cursor-pointer font-semibold">🧠 Salva la soluzione nella tua esperienza</summary>
-        {ok === "esperienza" && <p className="mt-2 text-sm text-green-300">Salvata! L&apos;assistente la userà per i prossimi casi simili.</p>}
+        {ok === "esperienza" && <p className="mt-2 text-sm text-green-700">Salvata! L&apos;assistente la userà per i prossimi casi simili.</p>}
         <form action={salvaEsperienza} className="mt-3 flex flex-col gap-2">
           <input type="hidden" name="torna" value={`/admin/conversazioni/${id}`} />
           <input name="titolo" className="campo-input" placeholder="Titolo (es. Fendt 724: errore sterzo dopo cambio ruote)" defaultValue={c.titolo} required />

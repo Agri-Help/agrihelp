@@ -155,8 +155,8 @@ export default function CaricaManuali() {
       {stati.length > 0 && (
         <ul className="text-sm sm:col-span-2">
           {stati.map((s, i) => (
-            <li key={i} className="border-t border-white/5 py-1">
-              <b>{s.nome}</b>: <span className={s.ok === false ? "text-red-300" : "text-white/70"}>{s.msg}</span>
+            <li key={i} className="border-t border-bordo py-1">
+              <b>{s.nome}</b>: <span className={s.ok === false ? "text-red-700" : "text-slate-700"}>{s.msg}</span>
             </li>
           ))}
         </ul>

@@ -88,13 +88,13 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
   if (fase === "password") {
     return (
       <form onSubmit={entraConPassword} className="flex flex-col gap-3">
-        <label className="text-white/80" htmlFor="email">La tua email</label>
+        <label className="text-navy" htmlFor="email">La tua email</label>
         <input id="email" className="campo-input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <label className="text-white/80" htmlFor="password">Password</label>
+        <label className="text-navy" htmlFor="password">Password</label>
         <input id="password" className="campo-input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        {errore && <p className="text-sm text-red-300">{errore}</p>}
+        {errore && <p className="text-sm text-red-700">{errore}</p>}
         <button className="bottone" disabled={attesa}>{attesa ? "Controllo…" : "Entra"}</button>
-        <button type="button" className="text-sm text-white/60 underline" onClick={() => { setErrore(""); setFase("email"); }}>
+        <button type="button" className="text-sm text-slate-600 underline" onClick={() => { setErrore(""); setFase("email"); }}>
           Entra invece con un codice via email
         </button>
       </form>
@@ -104,7 +104,7 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
   if (fase === "codice") {
     return (
       <form onSubmit={verifica} className="flex flex-col gap-3">
-        <p className="text-white/80">
+        <p className="text-navy">
           Ti abbiamo mandato un&apos;email a <b>{email}</b>. Scrivi qui il codice, oppure tocca il link nell&apos;email.
         </p>
         <input
@@ -117,11 +117,11 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
           onChange={(e) => setCodice(e.target.value.replace(/\D/g, ""))}
           autoFocus
         />
-        {errore && <p className="text-sm text-red-300">{errore}</p>}
+        {errore && <p className="text-sm text-red-700">{errore}</p>}
         <button className="bottone" disabled={attesa || codice.length < 6}>
           {attesa ? "Controllo…" : "Entra"}
         </button>
-        <button type="button" className="text-sm text-white/60 underline" onClick={() => setFase("email")}>
+        <button type="button" className="text-sm text-slate-600 underline" onClick={() => setFase("email")}>
           Cambia email o rimanda il codice
         </button>
       </form>
@@ -130,7 +130,7 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
 
   return (
     <form onSubmit={inviaCodice} className="flex flex-col gap-3">
-      <label className="text-white/80" htmlFor="email">
+      <label className="text-navy" htmlFor="email">
         La tua email
       </label>
       <input
@@ -144,12 +144,12 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
         onChange={(e) => setEmail(e.target.value)}
         required
       />
-      {errore && <p className="text-sm text-red-300">{errore}</p>}
+      {errore && <p className="text-sm text-red-700">{errore}</p>}
       <button className="bottone" disabled={attesa}>
         {attesa ? "Invio…" : "Ricevi il codice di accesso"}
       </button>
-      <p className="text-xs text-white/50">Accesso riservato ai clienti invitati. Niente password: ti mandiamo un codice via email.</p>
-      <button type="button" className="text-sm text-white/60 underline" onClick={() => { setErrore(""); setFase("password"); }}>
+      <p className="text-xs text-slate-600">Accesso riservato ai clienti invitati. Niente password: ti mandiamo un codice via email.</p>
+      <button type="button" className="text-sm text-slate-600 underline" onClick={() => { setErrore(""); setFase("password"); }}>
         Hai una password? Entra con la password
       </button>
     </form>

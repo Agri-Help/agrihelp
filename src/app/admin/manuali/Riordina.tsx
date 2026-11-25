@@ -48,14 +48,14 @@ function AggiungiImmagini({ d }: { d: Doc }) {
     setLavoro(false);
   }
 
-  if (d.immagini) return <span className="text-sm text-white/50">🖼️ con immagini</span>;
+  if (d.immagini) return <span className="text-sm text-slate-600">🖼️ con immagini</span>;
   return (
     <span className="text-sm">
-      <label className={`underline ${lavoro ? "text-white/40" : "cursor-pointer text-white/70"}`}>
+      <label className={`underline ${lavoro ? "text-slate-500" : "cursor-pointer text-slate-700"}`}>
         🖼️ Aggiungi immagini
         <input type="file" accept="application/pdf" className="hidden" disabled={lavoro} onChange={scelto} />
       </label>
-      {stato && <span className="ml-2 text-white/60">{stato}</span>}
+      {stato && <span className="ml-2 text-slate-600">{stato}</span>}
     </span>
   );
 }
@@ -127,7 +127,7 @@ export function SchedaDocumento({ d, inModifica = false }: { d: Doc; inModifica?
           <div className="truncate font-medium">
             {iconaCategoria(d.categoria)} {d.titolo}
           </div>
-          <div className="text-sm text-white/50">
+          <div className="text-sm text-slate-600">
             {nomeCategoria(d.categoria)} · {d.marca || "marca ?"} {d.modelli ? `· ${d.modelli}` : ""} · {nomeTipo(d.tipo)} · {d.pagine} pag.
             {d.link_drive && (
               <>
@@ -137,7 +137,7 @@ export function SchedaDocumento({ d, inModifica = false }: { d: Doc; inModifica?
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <button className="text-sm text-white/70 underline" onClick={() => setAperta(true)}>
+          <button className="text-sm text-slate-700 underline" onClick={() => setAperta(true)}>
             Modifica
           </button>
           <AggiungiImmagini d={d} />
@@ -148,7 +148,7 @@ export function SchedaDocumento({ d, inModifica = false }: { d: Doc; inModifica?
 
   return (
     <div className="scheda flex flex-col gap-2">
-      <div className="text-xs text-white/40">
+      <div className="text-xs text-slate-500">
         File: {d.titolo} · {d.pagine} pag.
         {d.proposta ? " · 🤖 proposta dell'assistente" : ""}
       </div>
@@ -172,20 +172,20 @@ export function SchedaDocumento({ d, inModifica = false }: { d: Doc; inModifica?
         <button className="bottone" disabled={lavoro || !v.titolo.trim()} onClick={conferma}>
           ✓ Conferma
         </button>
-        <button className="text-sm text-white/70 underline" disabled={lavoro} onClick={riproponi}>
+        <button className="text-sm text-slate-700 underline" disabled={lavoro} onClick={riproponi}>
           🤖 {d.proposta ? "Rifai la proposta" : "Fai la proposta"}
         </button>
         {d.confermato && (
-          <button className="text-sm text-white/70 underline" disabled={lavoro} onClick={() => setAperta(false)}>
+          <button className="text-sm text-slate-700 underline" disabled={lavoro} onClick={() => setAperta(false)}>
             Annulla
           </button>
         )}
         <form action={eliminaDocumento} className="ml-auto" onSubmit={(e) => { if (!confirm("Eliminare questo documento dall'assistente?")) e.preventDefault(); }}>
           <input type="hidden" name="id" value={d.id} />
-          <button className="text-sm text-red-300">Elimina</button>
+          <button className="text-sm text-red-700">Elimina</button>
         </form>
       </div>
-      {stato && <div className="text-sm text-white/70">{stato}</div>}
+      {stato && <div className="text-sm text-slate-700">{stato}</div>}
     </div>
   );
 }
@@ -242,7 +242,7 @@ export function DaRiordinare({ documenti }: { documenti: Doc[] }) {
     <div className="flex flex-col gap-2">
       <div className="scheda">
         <h2 className="font-semibold">Da riordinare ({documenti.length})</h2>
-        <p className="mt-1 text-sm text-white/60">
+        <p className="mt-1 text-sm text-slate-600">
           L&apos;assistente legge la copertina di ogni manuale e propone nome, categoria, marca e modello. Niente cambia finché non premi
           «Conferma».
         </p>
@@ -253,12 +253,12 @@ export function DaRiordinare({ documenti }: { documenti: Doc[] }) {
             </button>
           )}
           {pronte.length > 1 && (
-            <button className="rounded-full bg-white/10 px-4 py-2 text-sm" disabled={lavoro} onClick={confermaTutte}>
+            <button className="rounded-full bg-tenue px-4 py-2 text-sm" disabled={lavoro} onClick={confermaTutte}>
               ✓ Conferma tutte le {pronte.length} proposte
             </button>
           )}
         </div>
-        {stato && <div className="mt-2 text-sm text-white/70">{stato}</div>}
+        {stato && <div className="mt-2 text-sm text-slate-700">{stato}</div>}
       </div>
       {documenti.map((d) => (
         <SchedaDocumento key={`${d.id}-${d.proposta ? "p" : "n"}`} d={d} inModifica />

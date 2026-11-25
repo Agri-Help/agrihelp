@@ -1,36 +1,38 @@
 @import "tailwindcss";
 
+/* Tema chiaro AgriDiag: colori presi dal logo (blu navy, verde petrolio, rosso). */
 @theme {
-  --color-spazio: #0b1630;
-  --color-spazio-2: #13213f;
-  --color-spazio-3: #1c2d52;
-  --color-luna: #c9ccd3;
-  --color-campo: #4caf50;
-  --color-campo-scuro: #2e7d32;
-  --color-sole: #f59e0b;
+  --color-fondo: #f2f5f9;      /* sfondo pagine */
+  --color-carta: #ffffff;      /* schede, intestazioni, bolle dell'assistente */
+  --color-tenue: #e7ecf3;      /* pulsanti leggeri, etichette */
+  --color-bordo: #d3dbe6;
+  --color-navy: #14294a;       /* testo principale e titoli */
+  --color-petrolio: #0d6e62;   /* pulsanti principali e accenti */
+  --color-petrolio-scuro: #0a5a50;
+  --color-rosso: #c8322b;      /* il rosso del trattore, solo per piccoli richiami */
 }
 
 html, body { height: 100%; }
 body {
-  background: #0b1630;
-  color: #e8eaf0;
+  background: var(--color-fondo);
+  color: var(--color-navy);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  color-scheme: light;
 }
 
 .campo-input {
-  @apply w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/40 outline-none focus:border-sole;
+  @apply w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-navy placeholder:text-slate-500 outline-none focus:border-petrolio focus:ring-2 focus:ring-petrolio/20;
 }
-/* tendine: su Windows l'elenco aperto ha fondo bianco, quindi le voci vanno colorate a parte */
-select.campo-input { color-scheme: dark; }
-select.campo-input option { background-color: var(--color-spazio-2); color: #fff; }
+select.campo-input { color-scheme: light; }
+select.campo-input option { background-color: #fff; color: var(--color-navy); }
 .bottone {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-sole px-5 py-3 font-semibold text-spazio active:scale-[.98] disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-petrolio px-5 py-3 font-semibold text-white shadow-sm hover:bg-petrolio-scuro active:scale-[.98] disabled:opacity-50;
 }
 .bottone-secondario {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 font-medium text-white active:scale-[.98] disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-medium text-navy hover:bg-tenue active:scale-[.98] disabled:opacity-50;
 }
-.scheda { @apply rounded-2xl border border-white/10 bg-spazio-2 p-4; }
+.scheda { @apply rounded-2xl border border-bordo bg-carta p-4 shadow-sm; }
 
 .testo-ai p { margin: 0 0 .6em; }
 .testo-ai p:last-child { margin-bottom: 0; }
@@ -38,4 +40,4 @@ select.campo-input option { background-color: var(--color-spazio-2); color: #fff
 .testo-ai ol { list-style: decimal; }
 .testo-ai ul { list-style: disc; }
 .testo-ai li { margin: .2em 0; }
-.testo-ai strong { color: #fff; }
+.testo-ai strong { color: var(--color-navy); }
