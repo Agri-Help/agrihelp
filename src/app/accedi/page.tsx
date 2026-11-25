@@ -9,7 +9,7 @@ export default async function Accedi({ searchParams }: { searchParams: Promise<{
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col">
       <div className="flex flex-1 flex-col gap-5 px-5 pb-10 pt-[max(2rem,env(safe-area-inset-top))]">
-        <LogoCompleto className="mx-6" />
+        <LogoCompleto className="mx-auto w-52" />
         <div className="text-center">
           <h1 className="sr-only">AgriDiag</h1>
           <p className="text-sm text-slate-600">Assistenza per trattori e guide satellitari</p>

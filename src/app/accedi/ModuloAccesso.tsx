@@ -6,7 +6,7 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
   const sb = () => supabaseBrowser(url, chiave);
   const [email, setEmail] = useState("");
   const [codice, setCodice] = useState("");
-  const [fase, setFase] = useState<"email" | "codice" | "password">("email");
+  const [fase, setFase] = useState<"email" | "codice" | "password">("password");
   const [password, setPassword] = useState("");
   const [attesa, setAttesa] = useState(false);
   const [errore, setErrore] = useState("");
@@ -89,14 +89,15 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
     return (
       <form onSubmit={entraConPassword} className="flex flex-col gap-3">
         <label className="text-navy" htmlFor="email">La tua email</label>
-        <input id="email" className="campo-input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input id="email" className="campo-input" type="email" inputMode="email" autoComplete="email" placeholder="nome@esempio.it" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
         <label className="text-navy" htmlFor="password">Password</label>
         <input id="password" className="campo-input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         {errore && <p className="text-sm text-red-700">{errore}</p>}
         <button className="bottone" disabled={attesa}>{attesa ? "Controllo…" : "Entra"}</button>
         <button type="button" className="text-sm text-slate-600 underline" onClick={() => { setErrore(""); setFase("email"); }}>
-          Entra invece con un codice via email
+          Non hai la password? Ricevi un codice via email
         </button>
+        <p className="text-xs text-slate-600">Accesso riservato ai clienti invitati.</p>
       </form>
     );
   }
@@ -148,9 +149,9 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
       <button className="bottone" disabled={attesa}>
         {attesa ? "Invio…" : "Ricevi il codice di accesso"}
       </button>
-      <p className="text-xs text-slate-600">Accesso riservato ai clienti invitati. Niente password: ti mandiamo un codice via email.</p>
+      <p className="text-xs text-slate-600">Ti mandiamo un codice via email, senza bisogno di password.</p>
       <button type="button" className="text-sm text-slate-600 underline" onClick={() => { setErrore(""); setFase("password"); }}>
-        Hai una password? Entra con la password
+        Torna all&apos;accesso con email e password
       </button>
     </form>
   );
