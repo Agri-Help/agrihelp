@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { richiediAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { Logo } from "@/components/Scena";
+import { Logo } from "@/components/Logo";
 import ElenchiNoti from "@/components/ElenchiNoti";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export default async function LayoutAdmin({ children }: { children: React.ReactN
       <header className="sticky top-0 z-10 border-b border-white/10 bg-spazio/95 px-4 pt-[max(.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-center gap-3 pb-2">
           <Logo size={30} />
-          <div className="flex-1 font-semibold">AgriHelp · Pannello tecnico</div>
+          <div className="flex-1 font-semibold">AgriDiag · Pannello tecnico</div>
           <Link href="/chat" className="text-sm text-white/60 underline">Prova la chat</Link>
         </div>
         <nav className="-mx-1 flex gap-1 overflow-x-auto pb-2">

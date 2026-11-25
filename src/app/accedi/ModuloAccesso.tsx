@@ -41,7 +41,7 @@ export default function ModuloAccesso({ url, chiave }: { url: string; chiave: st
     if (error) {
       setErrore(
         /not found|signups not allowed|not allowed/i.test(error.message)
-          ? "Questo indirizzo non è abilitato. AgriHelp è solo su invito: contatta il tecnico."
+          ? "Questo indirizzo non è abilitato. AgriDiag è solo su invito: contatta il tecnico."
           : "Non riesco a inviare il codice. Riprova tra un minuto.",
       );
       return;

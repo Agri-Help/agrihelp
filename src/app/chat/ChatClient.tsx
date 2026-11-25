@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Logo } from "@/components/Scena";
+import { Logo } from "@/components/Logo";
 import { TestoAI } from "@/components/TestoAI";
 import { fotogrammiDaVideo, riduciFoto } from "@/lib/immagini";
 import { nomeMacchina, type Conversazione, type Macchina, type Messaggio, type Profilo } from "@/lib/tipi";
@@ -237,7 +237,7 @@ export default function ChatClient({ profilo, macchine, conversazioniIniziali, t
         </button>
         <Logo size={32} />
         <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold leading-tight">{attiva ? attiva.titolo : "AgriHelp"}</div>
+          <div className="truncate font-semibold leading-tight">{attiva ? attiva.titolo : "AgriDiag"}</div>
           {macchinaAttiva && <div className="truncate text-xs text-white/50">{nomeMacchina(macchinaAttiva)}</div>}
         </div>
         <div
