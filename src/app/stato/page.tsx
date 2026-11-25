@@ -50,7 +50,7 @@ export default async function Stato() {
 
   return (
     <main className="mx-auto max-w-xl p-5">
-      <h1 className="mb-1 text-xl font-bold">Controllo impostazioni AgriHelp</h1>
+      <h1 className="mb-1 text-xl font-bold">Controllo impostazioni AgriDiag</h1>
       <p className="mb-4 text-sm text-white/60">I valori non vengono mostrati: solo se ci sono o mancano.</p>
       <ul className="scheda flex flex-col gap-2">
         {righe.map((r) => (

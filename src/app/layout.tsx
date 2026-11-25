@@ -3,10 +3,10 @@ import "./globals.css";
 import { RegistraSW } from "@/components/RegistraSW";
 
 export const metadata: Metadata = {
-  title: "AgriHelp",
+  title: "AgriDiag",
   description: "Assistenza tecnica per trattori e guide satellitari",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "AgriHelp", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "AgriDiag", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
