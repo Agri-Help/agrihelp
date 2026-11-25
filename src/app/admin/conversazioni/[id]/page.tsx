@@ -4,7 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { conUrlFoto } from "@/lib/foto";
 import { TestoAI } from "@/components/TestoAI";
 import { numeroWhatsApp, type Messaggio } from "@/lib/tipi";
-import { cambiaStatoCaso, rispondiComeTecnico, salvaEsperienza } from "../../azioni";
+import { cambiaStatoCaso, rispondiComeTecnico } from "../../azioni";
+import { FormEsperienza } from "./FormEsperienza";
 
 export default async function Caso({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
   const { id } = await params;
@@ -86,16 +87,7 @@ export default async function Caso({ params, searchParams }: { params: Promise<{
       <details className="scheda" open={ok === "esperienza" ? false : undefined}>
         <summary className="cursor-pointer font-semibold">🧠 Salva la soluzione nella tua esperienza</summary>
         {ok === "esperienza" && <p className="mt-2 text-sm text-green-700">Salvata! L&apos;assistente la userà per i prossimi casi simili.</p>}
-        <form action={salvaEsperienza} className="mt-3 flex flex-col gap-2">
-          <input type="hidden" name="torna" value={`/admin/conversazioni/${id}`} />
-          <input name="titolo" className="campo-input" placeholder="Titolo (es. Fendt 724: errore sterzo dopo cambio ruote)" defaultValue={c.titolo} required />
-          <div className="grid grid-cols-2 gap-2">
-            <input name="marca" list="marche-note" className="campo-input" placeholder="Marca" defaultValue={m?.marca || ""} />
-            <input name="modelli" list="modelli-noti" className="campo-input" placeholder="Modelli" defaultValue={m?.modello || ""} />
-          </div>
-          <textarea name="testo" rows={5} className="campo-input" placeholder="Causa e soluzione, come la spiegheresti a un cliente." required />
-          <button className="bottone self-end">Salva esperienza</button>
-        </form>
+        <FormEsperienza key={ok || "nuovo"} conversazioneId={id} titolo={c.titolo || ""} marca={m?.marca || ""} modelli={m?.modello || ""} />
       </details>
     </div>
   );

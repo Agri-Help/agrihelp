@@ -3,6 +3,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { richiediAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { riassumiCaso, type BozzaEsperienza } from "@/lib/riassumi";
+import { spiegaErroreAnthropic } from "@/lib/assistente";
 
 const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const n = (f: FormData, k: string) => {
@@ -173,6 +175,16 @@ export async function salvaEsperienza(f: FormData) {
   revalidatePath("/admin/esperienza");
   const torna = s(f, "torna");
   if (torna) redirect(torna + "?ok=esperienza");
+}
+
+/** Bozza preparata dall'AI dal caso: non salva nulla, la rilegge e salva il tecnico. */
+export async function bozzaEsperienzaAI(conversazioneId: string): Promise<{ bozza?: BozzaEsperienza; errore?: string }> {
+  await richiediAdmin();
+  try {
+    return { bozza: await riassumiCaso(conversazioneId) };
+  } catch (e) {
+    return { errore: spiegaErroreAnthropic(e) };
+  }
 }
 
 export async function eliminaEsperienza(f: FormData) {
