@@ -4,7 +4,7 @@ import { CATEGORIE } from "@/lib/categorie";
 import CaricaManuali from "./CaricaManuali";
 import { DaRiordinare, SchedaDocumento, type Doc } from "./Riordina";
 
-export default async function Manuali({ searchParams }: { searchParams: Promise<{ categoria?: string; marca?: string; cerca?: string }> }) {
+export default async function Manuali({ searchParams }: { searchParams: Promise<{ categoria?: string; marca?: string | string[]; cerca?: string | string[] }> }) {
   const filtro = await searchParams;
   const { data, error } = await supabaseAdmin().from("documenti").select("*").order("titolo").limit(1000);
   const tutti = ((data || []) as Partial<Doc>[]).map(
@@ -18,22 +18,28 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
   const sistemati = manca0002 ? tutti : tutti.filter((d) => d.confermato);
 
   const marche = Array.from(new Set(sistemati.map((d) => (d.marca || "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
-  const cerca = (filtro.cerca || "").trim().toLowerCase();
-  const visibili = sistemati.filter(
+  const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || "";
+  const marcaScelta = uno(filtro.marca).trim().toLowerCase();
+  const cerca = uno(filtro.cerca).trim().toLowerCase();
+  // marca e ricerca valgono sia per la lista sia per i numeri sulle categorie, così i conteggi corrispondono sempre a ciò che si vede
+  const filtrati = sistemati.filter(
     (d) =>
-      (!filtro.categoria || (filtro.categoria === "nessuna" ? !d.categoria : d.categoria === filtro.categoria)) &&
-      (!filtro.marca || (d.marca || "").toLowerCase() === filtro.marca.toLowerCase()) &&
-      (!cerca || `${d.titolo} ${d.marca || ""} ${d.modelli || ""}`.toLowerCase().includes(cerca)),
+      (!marcaScelta || (d.marca || "").trim().toLowerCase() === marcaScelta) &&
+      (!cerca || `${d.titolo || ""} ${d.marca || ""} ${d.modelli || ""}`.toLowerCase().includes(cerca)),
   );
-  const conta = (id: string) => sistemati.filter((d) => d.categoria === id).length;
-  const senzaCategoria = sistemati.filter((d) => !d.categoria).length;
+  const visibili = filtrati.filter(
+    (d) => !filtro.categoria || (filtro.categoria === "nessuna" ? !d.categoria : d.categoria === filtro.categoria),
+  );
+  const conta = (id: string) => filtrati.filter((d) => d.categoria === id).length;
+  const senzaCategoria = filtrati.filter((d) => !d.categoria).length;
+  const altriFiltri = Boolean(marcaScelta || cerca);
   const link = (p: { categoria?: string; marca?: string }) => {
     const q = new URLSearchParams();
     const categoria = "categoria" in p ? p.categoria : filtro.categoria;
-    const marca = "marca" in p ? p.marca : filtro.marca;
+    const marca = "marca" in p ? p.marca : uno(filtro.marca);
     if (categoria) q.set("categoria", categoria);
     if (marca) q.set("marca", marca);
-    if (filtro.cerca) q.set("cerca", filtro.cerca);
+    if (cerca) q.set("cerca", uno(filtro.cerca));
     const s = q.toString();
     return `/admin/manuali${s ? `?${s}` : ""}`;
   };
@@ -78,7 +84,7 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
         <h2 className="mb-2 font-semibold">Manuali sistemati ({sistemati.length})</h2>
         <nav className="-mx-1 mb-2 flex gap-1 overflow-x-auto pb-1">
           <Link href={link({ categoria: undefined })} className={chip(!filtro.categoria)}>
-            Tutte
+            Tutte ({filtrati.length})
           </Link>
           {CATEGORIE.map((c) => (
             <Link key={c.id} href={link({ categoria: c.id })} className={chip(filtro.categoria === c.id)}>
@@ -91,15 +97,16 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
             </Link>
           )}
         </nav>
-        <form className="mb-3 flex flex-wrap gap-2" action="/admin/manuali">
+        {/* key: il modulo si ricrea a ogni cambio di filtri, così menu e casella mostrano sempre i filtri davvero attivi */}
+        <form key={`${filtro.categoria || ""}|${marcaScelta}|${cerca}`} className="mb-3 flex flex-wrap gap-2" action="/admin/manuali">
           {filtro.categoria && <input type="hidden" name="categoria" value={filtro.categoria} />}
-          <select name="marca" defaultValue={filtro.marca || ""} className="campo-input max-w-48">
+          <select name="marca" defaultValue={marche.find((m) => m.toLowerCase() === marcaScelta) || ""} className="campo-input max-w-48">
             <option value="">Tutte le marche</option>
             {marche.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
-          <input name="cerca" defaultValue={filtro.cerca || ""} placeholder="Cerca nome o modello" className="campo-input min-w-0 flex-1" />
+          <input name="cerca" defaultValue={uno(filtro.cerca)} placeholder="Cerca nome o modello" className="campo-input min-w-0 flex-1" />
           <button className="rounded-full bg-white/10 px-4 text-sm">Filtra</button>
         </form>
         <div className="flex flex-col gap-2">
@@ -108,6 +115,15 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
           ))}
           {sistemati.length === 0 && <p className="text-white/50">Nessun documento sistemato ancora.</p>}
           {sistemati.length > 0 && visibili.length === 0 && <p className="text-white/50">Nessun documento con questi filtri.</p>}
+          {altriFiltri && (
+            <p className="text-sm text-white/50">
+              Filtri attivi:{marcaScelta && <> marca <b>{uno(filtro.marca)}</b></>}
+              {cerca && <> ricerca <b>{uno(filtro.cerca)}</b></>}.{" "}
+              <Link href={filtro.categoria ? `/admin/manuali?categoria=${encodeURIComponent(filtro.categoria)}` : "/admin/manuali"} className="underline">
+                Togli filtri
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </div>
