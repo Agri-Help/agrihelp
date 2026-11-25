@@ -13,7 +13,7 @@ export default async function Clienti({ searchParams }: { searchParams: Promise<
     <div className="flex flex-col gap-5">
       <details className="scheda" open={clienti.length === 0 || !!errore}>
         <summary className="cursor-pointer text-lg font-bold">+ Invita un nuovo cliente</summary>
-        {errore && <p className="mt-2 rounded-lg bg-red-500/15 p-2 text-sm text-red-200">{errore}</p>}
+        {errore && <p className="mt-2 rounded-lg bg-red-50 border border-red-200 p-2 text-sm text-red-700">{errore}</p>}
         <form action={invitaCliente} className="mt-3 grid gap-2 sm:grid-cols-2">
           <input name="nome" className="campo-input" placeholder="Nome e cognome" required />
           <input name="email" type="email" className="campo-input" placeholder="Email (riceverà l'invito)" required />
@@ -25,7 +25,7 @@ export default async function Clienti({ searchParams }: { searchParams: Promise<
           </select>
           <input name="gettoni" type="number" min={0} className="campo-input" defaultValue={100} placeholder="Gettoni iniziali" />
           <input name="motivo_gettoni" className="campo-input sm:col-span-2" placeholder="Motivo gettoni (es. Vendita Fendt 724 - fattura 123)" defaultValue="Regalo alla vendita del trattore" />
-          <div className="pt-2 text-sm font-semibold text-white/70 sm:col-span-2">Prima macchina (facoltativa)</div>
+          <div className="pt-2 text-sm font-semibold text-slate-700 sm:col-span-2">Prima macchina (facoltativa)</div>
           <input name="marca" list="marche-note" className="campo-input" placeholder="Marca (es. Fendt)" />
           <input name="modello" list="modelli-noti" className="campo-input" placeholder="Modello (es. 724 Vario)" />
           <input name="anno" type="number" className="campo-input" placeholder="Anno" />
@@ -42,21 +42,21 @@ export default async function Clienti({ searchParams }: { searchParams: Promise<
 
       <div className="flex flex-col gap-2">
         {clienti.map((c) => (
-          <Link key={c.id} href={`/admin/clienti/${c.id}`} className="scheda flex items-center gap-3 hover:bg-spazio-3">
+          <Link key={c.id} href={`/admin/clienti/${c.id}`} className="scheda flex items-center gap-3 hover:bg-tenue">
             <div className="min-w-0 flex-1">
               <div className="font-semibold">
-                {c.nome || c.email} {c.ruolo === "collega" && <span className="ml-1 rounded bg-white/10 px-1.5 text-xs">collega</span>}
-                {!c.attivo && <span className="ml-1 rounded bg-red-500/30 px-1.5 text-xs">bloccato</span>}
+                {c.nome || c.email} {c.ruolo === "collega" && <span className="ml-1 rounded bg-tenue px-1.5 text-xs">collega</span>}
+                {!c.attivo && <span className="ml-1 rounded bg-red-100 text-red-800 px-1.5 text-xs">bloccato</span>}
               </div>
-              <div className="truncate text-sm text-white/50">
+              <div className="truncate text-sm text-slate-600">
                 {c.azienda ? `${c.azienda} · ` : ""}
                 {c.email} · 🚜 {(c.macchine as unknown[]).length}
               </div>
             </div>
-            <div className={`rounded-full px-3 py-1 text-sm font-semibold ${c.gettoni <= 5 ? "bg-red-500/20 text-red-200" : "bg-white/10"}`}>🎟️ {c.gettoni}</div>
+            <div className={`rounded-full px-3 py-1 text-sm font-semibold ${c.gettoni <= 5 ? "bg-red-100 text-red-700" : "bg-tenue"}`}>🎟️ {c.gettoni}</div>
           </Link>
         ))}
-        {clienti.length === 0 && <p className="text-white/50">Nessun cliente ancora.</p>}
+        {clienti.length === 0 && <p className="text-slate-600">Nessun cliente ancora.</p>}
       </div>
     </div>
   );

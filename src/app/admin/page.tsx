@@ -19,32 +19,32 @@ export default async function Casi({ searchParams }: { searchParams: Promise<{ t
     <div>
       <div className="mb-4 flex items-center gap-3">
         <h1 className="flex-1 text-xl font-bold">{tutti ? "Tutte le conversazioni" : "Casi passati a te"}</h1>
-        <Link className="text-sm underline text-white/70" href={tutti ? "/admin" : "/admin?tutti=1"}>
+        <Link className="text-sm underline text-slate-700" href={tutti ? "/admin" : "/admin?tutti=1"}>
           {tutti ? "Solo da gestire" : "Vedi tutte"}
         </Link>
       </div>
       {casi.length === 0 && (
-        <p className="scheda text-white/60">{tutti ? "Nessuna conversazione ancora." : "Nessun caso da gestire. 🎉"}</p>
+        <p className="scheda text-slate-600">{tutti ? "Nessuna conversazione ancora." : "Nessun caso da gestire. 🎉"}</p>
       )}
       <div className="flex flex-col gap-2">
         {casi.map((c) => {
           const p = c.profili as { nome: string; email: string; telefono: string | null; azienda: string | null } | null;
           const m = c.macchine as { marca: string; modello: string } | null;
           return (
-            <Link key={c.id} href={`/admin/conversazioni/${c.id}`} className="scheda block hover:bg-spazio-3">
+            <Link key={c.id} href={`/admin/conversazioni/${c.id}`} className="scheda block hover:bg-tenue">
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold">
-                    {!c.letta_dal_tecnico && <span className="mr-2 inline-block h-2 w-2 rounded-full bg-sole" />}
-                    {p?.nome || p?.email} {p?.azienda ? <span className="font-normal text-white/50">· {p.azienda}</span> : null}
+                    {!c.letta_dal_tecnico && <span className="mr-2 inline-block h-2 w-2 rounded-full bg-petrolio" />}
+                    {p?.nome || p?.email} {p?.azienda ? <span className="font-normal text-slate-600">· {p.azienda}</span> : null}
                   </div>
-                  <div className="truncate text-white/80">{c.titolo}</div>
-                  {m && <div className="text-xs text-white/50">🚜 {m.marca} {m.modello}</div>}
+                  <div className="truncate text-navy">{c.titolo}</div>
+                  {m && <div className="text-xs text-slate-600">🚜 {m.marca} {m.modello}</div>}
                   {c.stato === "al_tecnico" && c.motivo_tecnico && (
-                    <div className="mt-1 line-clamp-2 text-sm text-amber-200">{c.motivo_tecnico}</div>
+                    <div className="mt-1 line-clamp-2 text-sm text-amber-800">{c.motivo_tecnico}</div>
                   )}
                 </div>
-                <div className="shrink-0 text-right text-xs text-white/50">
+                <div className="shrink-0 text-right text-xs text-slate-600">
                   <div>{STATI[c.stato]}</div>
                   <div>{new Date(c.aggiornato_il).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}</div>
                 </div>

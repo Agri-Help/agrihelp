@@ -12,15 +12,15 @@ export default async function Accedi({ searchParams }: { searchParams: Promise<{
         <LogoCompleto className="mx-6" />
         <div className="text-center">
           <h1 className="sr-only">AgriDiag</h1>
-          <p className="text-sm text-white/60">Assistenza per trattori e guide satellitari</p>
+          <p className="text-sm text-slate-600">Assistenza per trattori e guide satellitari</p>
         </div>
         {errore === "non-autorizzato" && (
-          <p className="rounded-xl bg-red-500/15 p-3 text-sm text-red-200">
+          <p className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">
             Questo indirizzo non è abilitato. AgriDiag è riservato ai clienti invitati: contatta il tecnico.
           </p>
         )}
         {errore === "link" && (
-          <p className="rounded-xl bg-red-500/15 p-3 text-sm text-red-200">Il link è scaduto o non è valido. Richiedi un nuovo codice.</p>
+          <p className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">Il link è scaduto o non è valido. Richiedi un nuovo codice.</p>
         )}
         <ModuloAccesso url={supabaseUrl()} chiave={supabaseAnonKey()} />
       </div>

@@ -44,13 +44,13 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
     return `/admin/manuali${s ? `?${s}` : ""}`;
   };
   const chip = (attivo: boolean) =>
-    `shrink-0 rounded-full px-3 py-1 text-sm ${attivo ? "bg-sole font-semibold text-spazio" : "bg-white/5 hover:bg-white/10"}`;
+    `shrink-0 rounded-full px-3 py-1 text-sm ${attivo ? "bg-petrolio font-semibold text-white" : "bg-carta border border-bordo hover:bg-tenue"}`;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="scheda">
         <h1 className="text-lg font-bold">Aggiungi manuali e bollettini</h1>
-        <p className="mt-1 text-sm text-white/60">
+        <p className="mt-1 text-sm text-slate-600">
           Scegli uno o più PDF dal telefono o dal computer. Il testo viene letto pagina per pagina e messo a disposizione
           dell&apos;assistente: il PDF non viene caricato né condiviso con i clienti, che vedono solo brevi estratti e il numero di pagina.
           Nome, categoria, marca e modello li propone l&apos;assistente leggendo la copertina: tu controlli e confermi.
@@ -59,9 +59,9 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
       </div>
 
       {manca0002 && (
-        <div className="scheda border border-sole/40">
+        <div className="scheda border border-petrolio/40">
           <h2 className="font-semibold">⚠️ Serve un piccolo aggiornamento del database</h2>
-          <p className="mt-1 text-sm text-white/70">
+          <p className="mt-1 text-sm text-slate-700">
             Per usare le categorie apri Supabase → SQL Editor → New query, incolla tutto il file{" "}
             <b>supabase/migrations/0002_categorie_manuali.sql</b> e premi Run. Non cancella nessun dato.
           </p>
@@ -69,9 +69,9 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
       )}
 
       {manca0003 && (
-        <div className="scheda border border-sole/40">
+        <div className="scheda border border-petrolio/40">
           <h2 className="font-semibold">⚠️ Per le immagini dei manuali serve un aggiornamento del database</h2>
-          <p className="mt-1 text-sm text-white/70">
+          <p className="mt-1 text-sm text-slate-700">
             Apri Supabase → SQL Editor → New query, incolla tutto il file <b>supabase/migrations/0003_immagini_manuali.sql</b> e premi Run.
             Non cancella nessun dato.
           </p>
@@ -107,16 +107,16 @@ export default async function Manuali({ searchParams }: { searchParams: Promise<
             ))}
           </select>
           <input name="cerca" defaultValue={uno(filtro.cerca)} placeholder="Cerca nome o modello" className="campo-input min-w-0 flex-1" />
-          <button className="rounded-full bg-white/10 px-4 text-sm">Filtra</button>
+          <button className="rounded-full bg-tenue px-4 text-sm">Filtra</button>
         </form>
         <div className="flex flex-col gap-2">
           {visibili.map((d) => (
             <SchedaDocumento key={d.id} d={d} />
           ))}
-          {sistemati.length === 0 && <p className="text-white/50">Nessun documento sistemato ancora.</p>}
-          {sistemati.length > 0 && visibili.length === 0 && <p className="text-white/50">Nessun documento con questi filtri.</p>}
+          {sistemati.length === 0 && <p className="text-slate-600">Nessun documento sistemato ancora.</p>}
+          {sistemati.length > 0 && visibili.length === 0 && <p className="text-slate-600">Nessun documento con questi filtri.</p>}
           {altriFiltri && (
-            <p className="text-sm text-white/50">
+            <p className="text-sm text-slate-600">
               Filtri attivi:{marcaScelta && <> marca <b>{uno(filtro.marca)}</b></>}
               {cerca && <> ricerca <b>{uno(filtro.cerca)}</b></>}.{" "}
               <Link href={filtro.categoria ? `/admin/manuali?categoria=${encodeURIComponent(filtro.categoria)}` : "/admin/manuali"} className="underline">

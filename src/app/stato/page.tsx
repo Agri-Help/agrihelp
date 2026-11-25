@@ -51,29 +51,29 @@ export default async function Stato() {
   return (
     <main className="mx-auto max-w-xl p-5">
       <h1 className="mb-1 text-xl font-bold">Controllo impostazioni AgriDiag</h1>
-      <p className="mb-4 text-sm text-white/60">I valori non vengono mostrati: solo se ci sono o mancano.</p>
+      <p className="mb-4 text-sm text-slate-600">I valori non vengono mostrati: solo se ci sono o mancano.</p>
       <ul className="scheda flex flex-col gap-2">
         {righe.map((r) => (
           <li key={r.nome} className="flex items-center gap-2 font-mono text-sm">
             <span>{r.presente ? "✅" : r.obbligatoria ? "❌" : "⚪️"}</span>
             <span className="break-all">{r.nome}</span>
-            {!r.presente && <span className="ml-auto font-sans text-xs text-white/50">{r.obbligatoria ? "manca" : "facoltativa"}</span>}
+            {!r.presente && <span className="ml-auto font-sans text-xs text-slate-600">{r.obbligatoria ? "manca" : "facoltativa"}</span>}
           </li>
         ))}
         {url && (
-          <li className="mt-2 border-t border-white/10 pt-2 text-sm">
+          <li className="mt-2 border-t border-bordo pt-2 text-sm">
             {urlOk ? "✅" : "⚠️"} Indirizzo Supabase letto: <span className="break-all font-mono">{url}</span>
             {!urlOk && (
-              <span className="block text-white/60">
+              <span className="block text-slate-600">
                 Deve essere tipo https://abcdefghijklmnop.supabase.co (lo trovi in Supabase → Project Settings → API → Project URL).
               </span>
             )}
           </li>
         )}
-        <li className="mt-2 border-t border-white/10 pt-2 text-sm">
+        <li className="mt-2 border-t border-bordo pt-2 text-sm">
           <p>{pubblicaOk ? "✅" : "❌"} Chiave pubblica (sb_publishable_…) trovata</p>
           <p>{segretaOk ? "✅" : "❌"} Chiave segreta (sb_secret_…) trovata</p>
-          <ul className="mt-1 font-mono text-xs text-white/60">
+          <ul className="mt-1 font-mono text-xs text-slate-600">
             {chiavi.map((c) => (
               <li key={c.nome}>
                 {c.nome}: {c.tipo}
@@ -81,14 +81,14 @@ export default async function Stato() {
             ))}
           </ul>
         </li>
-        <li className="mt-2 border-t border-white/10 pt-2 text-sm">
+        <li className="mt-2 border-t border-bordo pt-2 text-sm">
           {database === "ok" ? "✅" : "❌"} Collegamento al database: {database}
         </li>
         <li className="text-sm">
           {anthropic === "ok" ? "✅" : "❌"} Collegamento ad Anthropic (Claude): {anthropic}
         </li>
       </ul>
-      <p className="mt-4 text-sm text-white/70">
+      <p className="mt-4 text-sm text-slate-700">
         {tuttoOk ? (
           <>Tutto a posto. <a className="underline" href="/accedi">Vai all&apos;accesso</a></>
         ) : (

@@ -6,11 +6,11 @@ export const metadata: Metadata = {
   title: "AgriDiag",
   description: "Assistenza tecnica per trattori e guide satellitari",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "AgriDiag", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "AgriDiag", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b1630",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
